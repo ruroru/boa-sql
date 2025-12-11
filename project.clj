@@ -21,7 +21,7 @@
                                     :password :env/clojars_pass}]]
 
 
-  :dependencies [[org.clojure/clojure "1.12.3"]
+  :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojure/tools.logging "1.3.0"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
