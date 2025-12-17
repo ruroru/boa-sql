@@ -12,7 +12,7 @@
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.2"]
                                      [com.h2database/h2 "2.4.240"]
                                      [org.postgresql/postgresql "42.7.8"]
-                                     [com.github.seancorfield/next.jdbc "1.3.1070"]]
+                                     [com.github.seancorfield/next.jdbc "1.3.1086"]]
                     :resource-paths ["test/resources"]}}
 
 
