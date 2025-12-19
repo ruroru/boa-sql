@@ -5,5 +5,9 @@
   ],
   "baseBranchPatterns": [
     "master"
-  ]
+  ],
+  "dependencyDashboard": false,
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash"
 }
