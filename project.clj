@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/boa-sql "1.0.1-SNAPSHOT"
+(defproject org.clojars.jj/boa-sql "1.0.1"
   :description "A library for frictionless SQL"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
