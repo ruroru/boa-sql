@@ -6,7 +6,7 @@
 
   :profiles {:test {
                     :dependencies   [[ch.qos.logback/logback-classic "1.5.23"]
-                                     [org.clojars.jj/embedded-mariadb-clj "1.1.1"]
+                                     [org.clojars.jj/embedded-mariadb-clj "1.2.0"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.7"]
                                      [org.xerial/sqlite-jdbc "3.51.1.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.2"]
@@ -22,9 +22,10 @@
 
 
   :dependencies [[org.clojure/clojure "1.12.4"]
-                 [org.clojure/tools.logging "1.3.0"]]
+                 [org.clojure/tools.logging "1.3.1"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
             [org.clojars.jj/strict-check "1.1.0"]
+            [org.clojars.jj/lein-git-tag "1.0.0"]
             [org.clojars.jj/bump-md "1.1.0"]]
   )

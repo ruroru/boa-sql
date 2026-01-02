@@ -20,7 +20,7 @@
 (use-fixtures :each
               (fn [f]
 
-                (mariadb/with-db!
+                (mariadb/with-db
                   (fn []
                     (logger/info "Creating database test_db")
                     (jdbc/execute! ds-without-database ["CREATE DATABASE test_db CHARACTER SET utf8mb4
@@ -51,7 +51,7 @@
 (defn- verify-customers-exists [ds] (jdbc/execute! ds ["SELECT * FROM customers"]))
 (defrecord Id [id])
 (deftest verify-insert
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/insert")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -68,8 +68,8 @@
          (verify-users-exists ds))))
 
 (deftest insert-tuple
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/multi-insert")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/select-customer")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -102,8 +102,8 @@
 
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/multi-insert")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/select-customer")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -129,6 +129,7 @@
                         :username "usernam4"}]
            (verify-customers-exists ds)))
 
+
     (is (= [{:email    "email4"
              :id       4
              :name     "name4"
@@ -136,8 +137,9 @@
            (select-fn ds {:email "email4"})))))
 
 (deftest select-user-session
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/insert-user-session")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "mariadb/select-user-session")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/insert-user-session")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-user-session")
+        select-all-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-all-user-sessions")]
 
     (query-fn ds {:username      "john_doe"
                   :session-id    "sess123"
@@ -155,6 +157,14 @@
              :session-id    "sess456"
              :username      "jane_smith"}]
            (select-fn ds {:session "sess456"})))
+
+    (is (= [{:creation-date "2025-10-13 14:30:00"
+             :session-id    "sess123"
+             :username      "john_doe"}
+            {:creation-date "2025-10-13 15:45:00"
+             :session-id    "sess456"
+             :username      "jane_smith"}]
+           (select-all-fn ds )))
 
     (is (= []
            (select-fn ds {:session "not-existing"})))))

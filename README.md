@@ -16,7 +16,7 @@ Create a query file in your resources directory with variables marked with ``:va
 ```clojure
 (require [jj.sql.boa :as boa])
 
-(def query (boa/execute (boa/->NextJdbcAdapter) "query-in-resource.sql"))
+(def query (boa/build-query (boa/->NextJdbcAdapter) "query-in-resource.sql"))
 
 ;; Execute with context
 (query data-source {:user-id 42})

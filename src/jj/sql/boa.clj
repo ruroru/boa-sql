@@ -53,58 +53,31 @@
     parameters))
 
 (defprotocol BoaQuery
-  (execute-one [this query-file])
-  (execute [this query-file]))
+  (build-query [this query-file]))
 
 (defrecord NextJdbcAdapter []
   BoaQuery
-  (execute-one [this query-file]
-    (let [resource (io/resource query-file)]
-      (when-not resource
-        (throw (ex-info (str "Query resource not found: " query-file)
-                        {:resource query-file})))
-      (let [file-content (str/trim (slurp resource))
-            parsed (parser/tokenize file-content)]
-        (fn ([data-source]
-             (let [sb (StringBuilder.)
-                   statement-params (build-prepared-statement {} parsed sb [])]
-               (when (logger/enabled? :debug)
-                 (logger/debugf "Running query \n'%s'\nwith params: %s" (.toString sb) statement-params))
-               (jdbc/execute! data-source
-                              (into [(.toString sb)] statement-params)
-                              {:builder-fn rs/as-unqualified-lower-maps})))
-          ([data-source context]
-           (let [sb (StringBuilder.)
-                 statement-params (build-prepared-statement context parsed sb [])]
-             (when (logger/enabled? :debug)
-               (logger/debugf "Running query \n'%s'\nwith params: %s" (.toString sb) statement-params))
-             (first (jdbc/execute! data-source
-                                   (into [(.toString sb)] statement-params)
-                                   {:builder-fn rs/as-unqualified-lower-maps}))))))))
-  (execute [this query-file]
-    (let [resource (io/resource query-file)]
-      (when-not resource
-        (throw (ex-info (str "Query resource not found: " query-file)
-                        {:resource query-file})))
-      (let [file-content (str/trim (slurp resource))
-            parsed (parser/tokenize file-content)]
+  (build-query [this query-file]
+    (let [resource (or (io/resource query-file)
+                       (throw (ex-info "Query not found" {:file query-file})))
+          tokens (parser/tokenize (str/trim (slurp resource)))
+          var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
+
+      (cond
+        (zero? var-count)
+        (let [static-sb (StringBuilder.)
+              static-params (build-prepared-statement {} tokens static-sb [])
+              static-query (vec (cons (.toString static-sb) static-params))]
+          (fn
+            ([ds] (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))
+            ([ds _] (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))))
+
+        :else
         (fn
-          ([data-source]
+          ([ds context]
            (let [sb (StringBuilder.)
-                 statement-params (build-prepared-statement {} parsed sb [])]
+                 params (build-prepared-statement context tokens sb [])]
              (when (logger/enabled? :debug)
-               (logger/debugf "Running query \n'%s'\nwith params: %s" (.toString sb) statement-params))
-             (jdbc/execute! data-source
-                            (into [(.toString sb)] statement-params)
-                            {:builder-fn rs/as-unqualified-lower-maps})))
-          ([data-source context]
-           (let [sb (StringBuilder.)
-                 statement-params (build-prepared-statement context parsed sb [])]
-             (when (logger/enabled? :debug)
-               (logger/debugf "Running query \n'%s'\nwith params: %s" (.toString sb) statement-params))
-             (jdbc/execute! data-source
-                            (into [(.toString sb)] statement-params)
+               (logger/debugf "Running multi-variable query: %s with params: %s" query-file params))
+             (jdbc/execute! ds (into [(.toString sb)] params)
                             {:builder-fn rs/as-unqualified-lower-maps}))))))))
-
-
-

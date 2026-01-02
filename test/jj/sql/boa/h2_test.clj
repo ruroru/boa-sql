@@ -34,7 +34,7 @@
 (defrecord Id [id])
 
 (deftest verify-insert
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "h2/insert")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -51,8 +51,8 @@
 
 
 (deftest insert-tuple
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "h2/multi-insert")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "h2/select-customer")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/multi-insert")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -86,8 +86,8 @@
 (defrecord Customer [user-name email name])
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "h2/multi-insert")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "h2/select-customer")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/multi-insert")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -121,8 +121,8 @@
 
 
 (deftest select-user-session
-  (let [query-fn (boa/execute (boa/->NextJdbcAdapter) "h2/insert-user-session")
-        select-fn (boa/execute (boa/->NextJdbcAdapter) "h2/select-user-session")]
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/insert-user-session")
+        select-fn (boa/build-query (boa/->NextJdbcAdapter) "h2/select-user-session")]
 
     (query-fn ds {:username      "john_doe"
                   :session-id    "sess123"
