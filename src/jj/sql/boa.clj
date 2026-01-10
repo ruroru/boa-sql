@@ -69,8 +69,39 @@
               static-params (build-prepared-statement {} tokens static-sb [])
               static-query (vec (cons (.toString static-sb) static-params))]
           (fn
-            ([ds] (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))
-            ([ds _] (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))))
+            ([ds]
+             (when (logger/enabled? :debug)
+               (logger/debug "Query is: " (.toString static-sb)))
+             (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))
+            ([ds _]
+             (when (logger/enabled? :debug)
+               (logger/debug "Query is: " (.toString static-sb)))
+             (jdbc/execute! ds static-query {:builder-fn rs/as-unqualified-lower-maps}))))
+
+        (= 1 var-count)
+        (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
+
+              single-val-sb (StringBuilder.)
+              _ (build-prepared-statement {var-name ::single-placeholder} tokens single-val-sb [])
+              single-val-sql (.toString single-val-sb)
+
+              single-arg-fn (fn [ds arg]
+                              (when (logger/enabled? :debug)
+                                (logger/debug "Query is: " (.toString single-val-sb)))
+                              (let [param-value (get arg var-name)]
+                                (jdbc/execute! ds [single-val-sql param-value] {:builder-fn rs/as-unqualified-lower-maps})))
+
+              array-arg-fn (fn [ds arg-map]
+                             (let [sb (StringBuilder.)
+                                   params (build-prepared-statement arg-map tokens sb [])]
+                               (when (logger/enabled? :debug)
+                                 (logger/debug "Query is: " (.toString sb)))
+                               (jdbc/execute! ds (into [(.toString sb)] params)
+                                              {:builder-fn rs/as-unqualified-lower-maps})))]
+          (fn [ds arg]
+            (if (vector? (get arg var-name))
+              (array-arg-fn ds arg)
+              (single-arg-fn ds arg))))
 
         :else
         (fn
@@ -78,6 +109,6 @@
            (let [sb (StringBuilder.)
                  params (build-prepared-statement context tokens sb [])]
              (when (logger/enabled? :debug)
-               (logger/debugf "Running multi-variable query: %s with params: %s" query-file params))
+               (logger/debug "Query is: " (.toString sb)))
              (jdbc/execute! ds (into [(.toString sb)] params)
                             {:builder-fn rs/as-unqualified-lower-maps}))))))))

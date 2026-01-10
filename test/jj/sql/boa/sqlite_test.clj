@@ -177,3 +177,47 @@
 
     (is (= []
            (select-fn ds {:session "not-existing"})))))
+
+(deftest no-arg-test
+  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert")
+        select-all-query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/users-select-all")]
+    (are [input expected] (= expected (query-fn ds input))
+                          {:id "id1"} [#:next.jdbc{:update-count 1}]
+                          {:id "id2"} [#:next.jdbc{:update-count 1}]
+                          {:id "id3"} [#:next.jdbc{:update-count 1}]
+                          {:id "id4"} [#:next.jdbc{:update-count 1}]
+                          (Id. "id5") [#:next.jdbc{:update-count 1}])
+    (is (= [{:id "id1"}
+            {:id "id2"}
+            {:id "id3"}
+            {:id "id4"}
+            {:id "id5"}] (select-all-query-fn ds {})))
+    (is (= [{:id "id1"}
+            {:id "id2"}
+            {:id "id3"}
+            {:id "id4"}
+            {:id "id5"}] (select-all-query-fn ds)))))
+
+(deftest one-arg-keyword
+  (let [insert (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert")
+        insert-multiple (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert-multiple")
+        select-all-query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/users-select-all")]
+    (are [input expected] (= expected (insert ds input))
+                          {:id "id2"} [#:next.jdbc{:update-count 1}]
+                          )
+
+    (are [input expected] (= expected (insert-multiple ds input))
+                          {:id [["id3"] ["id4"]]} [#:next.jdbc{:update-count 2}]
+                          {:id [["id5"] ["id6"]]} [#:next.jdbc{:update-count 2}]
+                          {:id ["id7"]} [#:next.jdbc{:update-count 1}]
+
+                          )
+    (is (= [{:id "id2"}
+            {:id "id3"}
+            {:id "id4"}
+            {:id "id5"}
+            {:id "id6"}
+            {:id "id7"}]
+           (select-all-query-fn ds)))))
+
+
