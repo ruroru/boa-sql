@@ -22,6 +22,16 @@ Create a query file in your resources directory with variables marked with ``:va
 (query data-source {:user-id 42})
 ```
 
+or async
+```clojure
+(require [jj.sql.boa :as boa])
+
+(def async-query (boa/build-async-query executor (boa/->NextJdbcAdapter) "query-in-resource.sql"))
+
+;; Execute with context
+(async-query data-source {:user-id 42} respnd raise)
+```
+
 ### Single value
 
 ```clojure

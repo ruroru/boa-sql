@@ -1,9 +1,11 @@
 (ns jj.sql.boa.query.next-jdbc
-            [next.jdbc.result-set :as rs]
-            [jj.sql.boa.query :refer [BoaQuery]]))
+  (:require [clojure.tools.logging :as logger]
+            [next.jdbc :as jdbc]
+            [jj.sql.boa.query :as boa-query]
+            [next.jdbc.result-set :as rs]))
 
 (defrecord NextJdbcAdapter [additional-info]
-  BoaQuery
+  boa-query/BoaQuery
   (build-parameterless-query [this ds sql]
     (when (logger/enabled? :debug)
       (logger/debugf "Query is: %s" [sql]))
