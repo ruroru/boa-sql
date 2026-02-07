@@ -1,6 +1,7 @@
 (ns jj.sql.boa.sqlite-test
   (:require [clojure.test :refer [are deftest is use-fixtures]]
             [jj.sql.boa :as boa]
+            [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
             [next.jdbc :as jdbc])
   (:import (java.nio.file Files Paths)))
 
@@ -31,7 +32,7 @@
 (defrecord Id [id])
 
 (deftest verify-insert
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -49,8 +50,8 @@
 
 
 (deftest insert-tuple
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "sqlite/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -84,8 +85,8 @@
 
 (defrecord Customer [user-name email name])
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "sqlite/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -119,8 +120,8 @@
 
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "sqlite/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -154,9 +155,9 @@
 
 
 (deftest select-user-session
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert-user-session")
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/insert-user-session")
 
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/select-user-session")]
+        select-fn (boa/build-query (->NextJdbcAdapter) "sqlite/select-user-session")]
 
     (query-fn ds {:username      "john_doe"
                   :session-id    "sess123"
@@ -179,8 +180,8 @@
            (select-fn ds {:session "not-existing"})))))
 
 (deftest no-arg-test
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert")
-        select-all-query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/users-select-all")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/insert")
+        select-all-query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/users-select-all")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -199,9 +200,9 @@
             {:id "id5"}] (select-all-query-fn ds)))))
 
 (deftest one-arg-keyword
-  (let [insert (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert")
-        insert-multiple (boa/build-query (boa/->NextJdbcAdapter) "sqlite/insert-multiple")
-        select-all-query-fn (boa/build-query (boa/->NextJdbcAdapter) "sqlite/users-select-all")]
+  (let [insert (boa/build-query (->NextJdbcAdapter) "sqlite/insert")
+        insert-multiple (boa/build-query (->NextJdbcAdapter) "sqlite/insert-multiple")
+        select-all-query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/users-select-all")]
     (are [input expected] (= expected (insert ds input))
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
                           )

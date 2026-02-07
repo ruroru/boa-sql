@@ -3,6 +3,7 @@
             [clojure.tools.logging :as logger]
             [embedded.mariadb :as mariadb]
             [jj.sql.boa :as boa]
+            [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
             [next.jdbc :as jdbc]))
 
 (def ds-without-database (jdbc/get-datasource
@@ -51,7 +52,7 @@
 (defn- verify-customers-exists [ds] (jdbc/execute! ds ["SELECT * FROM customers"]))
 (defrecord Id [id])
 (deftest verify-insert
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/insert")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -68,8 +69,8 @@
          (verify-users-exists ds))))
 
 (deftest insert-tuple
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -102,8 +103,8 @@
 
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -137,9 +138,9 @@
            (select-fn ds {:email "email4"})))))
 
 (deftest select-user-session
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/insert-user-session")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-user-session")
-        select-all-fn (boa/build-query (boa/->NextJdbcAdapter) "mariadb/select-all-user-sessions")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/insert-user-session")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-user-session")
+        select-all-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-all-user-sessions")]
 
     (query-fn ds {:username      "john_doe"
                   :session-id    "sess123"
@@ -164,7 +165,7 @@
             {:creation-date "2025-10-13 15:45:00"
              :session-id    "sess456"
              :username      "jane_smith"}]
-           (select-all-fn ds )))
+           (select-all-fn ds)))
 
     (is (= []
            (select-fn ds {:session "not-existing"})))))

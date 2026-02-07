@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [are deftest is use-fixtures]]
             [clojure.tools.logging :as logger]
             [jj.sql.boa :as boa]
+            [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
             [next.jdbc :as jdbc]
             [pg-embedded-clj.core :as pg]))
 
@@ -48,7 +49,7 @@
 (defrecord Id [id])
 (defrecord NumericId [id numeric-id])
 (deftest verify-insert
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/insert")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -65,8 +66,8 @@
          (verify-users-exists ds))))
 
 (deftest insert-tuple
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -99,8 +100,8 @@
 
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/multi-insert")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -133,8 +134,8 @@
            (select-fn ds {:email "email4"})))))
 
 (deftest select-user-session
-  (let [insert-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/insert-user-session")
-        select-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/select-user-session")]
+  (let [insert-fn (boa/build-query (->NextJdbcAdapter) "pg/insert-user-session")
+        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-user-session")]
 
     (insert-fn ds {:username      "john_doe"
                    :session-id    "sess123"
@@ -157,7 +158,7 @@
            (select-fn ds {:session "not-existing"})))))
 
 (deftest verify-cast-in-pg
-  (let [query-fn (boa/build-query (boa/->NextJdbcAdapter) "pg/insert-with-cast")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/insert-with-cast")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id 1 :numeric-id "2"} [#:next.jdbc{:update-count 1}]
                           {:id 2 :numeric-id "3"} [#:next.jdbc{:update-count 1}]

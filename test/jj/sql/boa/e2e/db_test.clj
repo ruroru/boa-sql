@@ -1,4 +1,4 @@
-(ns db-test
+(ns jj.sql.boa.e2e.db-test
   (:require [clojure.test :refer :all]
             [hato.client :as http]
             [next.jdbc :as jdbc]
