@@ -6,11 +6,11 @@
 
 (defrecord NextJdbcAdapter [additional-info]
   boa-query/BoaQuery
-  (build-parameterless-query [this ds sql]
+  (parameterless-query [this ds sql]
     (when (logger/enabled? :debug)
       (logger/debugf "Query is: %s" [sql]))
     (jdbc/execute! ds [sql] additional-info))
-  (build-query [this ds sql params]
+  (query [this ds sql params]
     (when (logger/enabled? :debug)
       (logger/debugf "Query is: %s" (into [sql] params)))
     (jdbc/execute! ds (into [sql] params) additional-info)))

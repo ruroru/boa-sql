@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as query])
+            [jj.sql.boa.query :as boa-query])
   (:import (java.util.concurrent CompletableFuture)
            (java.util.function Consumer Function)))
 
@@ -62,11 +62,11 @@
           ([ds]
            (when (logger/enabled? :debug)
              (logger/debug "Query is: " sql))
-           (query/build-parameterless-query adapter ds sql))
+           (boa-query/parameterless-query adapter ds sql))
           ([ds _]
            (when (logger/enabled? :debug)
              (logger/debug "Query is: " sql))
-           (query/build-parameterless-query adapter ds sql))))
+           (boa-query/parameterless-query adapter ds sql))))
 
       (= 1 var-count)
       (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
@@ -76,13 +76,13 @@
                             (when (logger/enabled? :debug)
                               (logger/debug "Query is: " sql))
                             (let [param-value (get arg var-name)]
-                              (query/build-query adapter ds sql [param-value])))
+                              (boa-query/query adapter ds sql [param-value])))
 
             array-arg-fn (fn [ds arg-map]
                            (let [{:keys [sql params]} (build-prepared-statement arg-map tokens "" [])]
                              (when (logger/enabled? :debug)
                                (logger/debug "Query is: " sql))
-                             (query/build-query adapter ds sql params)))]
+                             (boa-query/query adapter ds sql params)))]
         (fn [ds arg]
           (if (vector? (get arg var-name))
             (array-arg-fn ds arg)
@@ -94,7 +94,7 @@
          (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
            (when (logger/enabled? :debug)
              (logger/debug "Query is: " sql))
-           (query/build-query adapter ds sql params)))))))
+           (boa-query/query adapter ds sql params)))))))
 
 (defn build-async-query [executor adapter query-file]
   (let [resource (or (io/resource query-file)
@@ -111,7 +111,7 @@
              (logger/debug "Query is: " sql))
            (-> (CompletableFuture/supplyAsync
                  (fn []
-                   (query/build-parameterless-query adapter ds sql))
+                   (boa-query/parameterless-query adapter ds sql))
                  executor)
                ^CompletableFuture (.thenAccept ^Consumer respond)
                ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise))))
@@ -120,7 +120,7 @@
              (logger/debug "Query is: " sql))
            (-> (CompletableFuture/supplyAsync
                  (fn []
-                   (query/build-parameterless-query adapter ds sql))
+                   (boa-query/parameterless-query adapter ds sql))
                  executor)
                ^CompletableFuture (.thenAccept ^Consumer respond)
                ^CompletableFuture  (.exceptionally ^Function (ErrorHandler. raise))))))
@@ -135,7 +135,7 @@
                             (let [param-value (get arg var-name)]
                               (-> (CompletableFuture/supplyAsync
                                     (fn []
-                                      (query/build-query adapter ds sql [param-value]))
+                                      (boa-query/query adapter ds sql [param-value]))
                                     executor)
                                   ^CompletableFuture (.thenAccept ^Consumer respond)
                                   ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise)))))
@@ -146,7 +146,7 @@
                                (logger/debug "Query is: " sql))
                              (-> (CompletableFuture/supplyAsync
                                    (fn []
-                                     (query/build-query adapter ds sql params))
+                                     (boa-query/query adapter ds sql params))
                                    executor)
                                  ^CompletableFuture (.thenAccept ^Consumer respond)
                                  ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise)))))]
@@ -162,7 +162,7 @@
             (logger/debug "Query is: " sql))
           (-> (CompletableFuture/supplyAsync
                 (fn []
-                  (query/build-query adapter ds sql params))
+                  (boa-query/query adapter ds sql params))
                 executor)
               ^CompletableFuture (.thenAccept ^Consumer respond)
               ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise))))))))
