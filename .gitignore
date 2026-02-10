@@ -1,11 +1,12 @@
+**/target
 /target
 /classes
 /checkouts
-pom.xml
 pom.xml.asc
 *.jar
 *.class
 /.lein-*
+.lein-failures
 /.nrepl-port
 .hgignore
 .hg/
@@ -15,3 +16,4 @@ pom.xml.asc
 /repo
 /file.db
 /file.mv.db
+pom.xml
