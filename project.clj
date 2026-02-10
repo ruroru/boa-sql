@@ -8,7 +8,7 @@
                     :dependencies   [[ch.qos.logback/logback-classic "1.5.29"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.7"]
-                                     [org.xerial/sqlite-jdbc "3.51.1.0"]
+                                     [org.xerial/sqlite-jdbc "3.51.2.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.2"]
                                      [com.h2database/h2 "2.4.240"]
                                      [org.clojars.jj/ring-http-exchange "1.3.0"]
