@@ -1,1 +1,0 @@
-INSERT INTO users_with_cast (id, numeric_id) VALUES (:id, :numeric-id::INTEGER)

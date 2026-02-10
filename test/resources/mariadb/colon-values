@@ -1,7 +1,0 @@
-SELECT
-    username,
-    session_id AS `session-id`,
-    DATE_FORMAT(creation_date, '%Y-%m-%d %H:%i:%s') AS `creation-date`
-FROM
-    moviedb.usersessions
-WHERE session_id = :session;
