@@ -12,5 +12,8 @@
                  ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
                  ["clojars" {:url "https://repo.clojars.org/"}]]
 
+  :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
+                                    :username :env/clojars_user
+                                    :password :env/next_jdbc_adapter_clojars_pass}]]
 
   :repl-options {:init-ns next-jdbc-adapter.core})

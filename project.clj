@@ -12,7 +12,7 @@
 
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
-                                    :password :env/clojars_pass}]]
+                                    :password :env/boa_parent_clojars_pass}]]
 
   :sub ["boa-query"
         "next-jdbc-adapter"

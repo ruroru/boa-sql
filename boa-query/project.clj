@@ -10,5 +10,8 @@
                  ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
                  ["clojars" {:url "https://repo.clojars.org/"}]]
 
+  :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
+                                    :username :env/clojars_user
+                                    :password :env/boa_query_clojars_pass}]]
 
   :repl-options {:init-ns boa-query.core})

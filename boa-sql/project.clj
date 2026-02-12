@@ -20,7 +20,7 @@
 
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
-                                    :password :env/clojars_pass}]]
+                                    :password :env/boa_sql_clojars_pass}]]
 
 
   :dependencies [[org.clojure/clojure "1.12.4"]
