@@ -11,7 +11,7 @@
                                      [org.xerial/sqlite-jdbc "3.51.2.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.2"]
                                      [com.h2database/h2 "2.4.240"]
-                                     [org.clojars.jj/ring-http-exchange "1.3.0"]
+                                     [org.clojars.jj/ring-http-exchange "1.4.0"]
                                      [hato "1.0.0"]
                                      [org.postgresql/postgresql "42.7.10"]
                                      [com.github.seancorfield/next.jdbc "1.3.1093"]]
