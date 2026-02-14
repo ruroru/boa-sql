@@ -5,7 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
 
   :profiles {:test {
-                    :dependencies   [[ch.qos.logback/logback-classic "1.5.30"]
+                    :dependencies   [[ch.qos.logback/logback-classic "1.5.31"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.7"]
                                      [org.xerial/sqlite-jdbc "3.51.2.0"]
