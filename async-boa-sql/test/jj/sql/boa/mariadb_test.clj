@@ -1,55 +1,58 @@
-(ns jj.sql.boa.pg-test
+(ns jj.sql.boa.mariadb_test
   (:require [clojure.test :refer [are deftest is use-fixtures]]
             [clojure.tools.logging :as logger]
+            [embedded.mariadb :as mariadb]
             [jj.sql.boa :as boa]
             [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
-            [next.jdbc :as jdbc]
-            [pg-embedded-clj.core :as pg]))
+            [next.jdbc :as jdbc]))
 
-(def ds
-  {:dbtype   "postgresql"
-   :dbname   "test_db"
-   :host     "localhost"
-   :port     54323
-   :user     "postgres"
-   :password "postgres"
-   })
+(def ds-without-database (jdbc/get-datasource
+                           {:dbtype "mariadb"
+                            :host   "localhost"
+                            :port   4306}))
+
+(def ds {:dbtype            "mariadb"
+         :dbname            "test_db"
+         :host              "localhost"
+         :port              4306
+         :useUnicode        "true"
+         :characterEncoding "utf8"})
 
 (use-fixtures :each
               (fn [f]
-                (logger/info "Creating database test_db")
 
+                (mariadb/with-db
+                  (fn []
+                    (logger/info "Creating database test_db")
+                    (jdbc/execute! ds-without-database ["CREATE DATABASE test_db CHARACTER SET utf8mb4
+                    COLLATE utf8mb4_general_ci;"])
+                    (jdbc/execute! ds ["CREATE TABLE  IF NOT EXISTS  test_db.users (
+                                    id VARCHAR(255) PRIMARY KEY)
+                                    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"])
+                    (jdbc/execute! ds ["CREATE TABLE customers (id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                    username VARCHAR(255) NOT NULL UNIQUE, email VARCHAR(255) NOT NULL UNIQUE,
+                    name VARCHAR(255) NOT NULL\n);"])
+                    (jdbc/execute! ds ["CREATE TABLE IF NOT EXISTS test_db.usersessions (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(255) NOT NULL,
+    session_id VARCHAR(255) NOT NULL UNIQUE,
+    creation_date DATETIME NOT NULL
+)"])
+                    (f)
+                    (jdbc/execute! ds ["DROP TABLE IF EXISTS test_db.customers"])
+                    (jdbc/execute! ds ["DROP TABLE IF EXISTS test_db.users"]))
 
-                (pg/with-pg-fn {:port 54323}
-
-                               (fn []
-                                 (jdbc/execute! {:dbtype   "postgresql"
-                                                 :host     "localhost"
-                                                 :port     54323
-                                                 :user     "postgres"
-                                                 :password "postgres"
-                                                 } ["CREATE DATABASE test_db"])
-
-                                 (jdbc/execute! ds ["CREATE TABLE IF NOT EXISTS users (
-                                 id VARCHAR(255) PRIMARY KEY\n);"])
-                                 (jdbc/execute! ds ["CREATE TABLE users_with_cast (id INTEGER, numeric_id INTEGER)"])
-                                 (jdbc/execute! ds ["CREATE TABLE customers (
-                                 id SERIAL PRIMARY KEY, username VARCHAR(255) NOT NULL UNIQUE,
-                                 email VARCHAR(255) NOT NULL UNIQUE, name VARCHAR(255) NOT NULL\n);"])
-                                 (jdbc/execute! ds ["CREATE TABLE IF NOT EXISTS usersessions
-                                 (id SERIAL PRIMARY KEY, username VARCHAR(255) NOT NULL,
-                                 session_id VARCHAR(255) NOT NULL UNIQUE, creation_date TIMESTAMP NOT NULL\n);"])
-                                 (f)
-                                 ))))
+                  {:port     4306
+                   :on-error (fn [e]
+                               (.printStackTrace ^Exception e))})))
 
 (defn- verify-users-exists [ds]
   (jdbc/execute! ds ["SELECT * FROM users"]))
 
 (defn- verify-customers-exists [ds] (jdbc/execute! ds ["SELECT * FROM customers"]))
 (defrecord Id [id])
-(defrecord NumericId [id numeric-id])
 (deftest verify-insert
-  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/insert")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/insert")]
     (are [input expected] (= expected (query-fn ds input))
                           {:id "id1"} [#:next.jdbc{:update-count 1}]
                           {:id "id2"} [#:next.jdbc{:update-count 1}]
@@ -66,8 +69,8 @@
          (verify-users-exists ds))))
 
 (deftest insert-tuple
-  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/multi-insert")
-        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
                           {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
@@ -100,8 +103,8 @@
 
 
 (deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/multi-insert")
-        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-customer")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/multi-insert")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-customer")]
     (are [input expected] (= expected (query-fn ds input))
                           {:customer [["username" "email" "name"]
                                       ["username2" "email2" "name2"]
@@ -127,6 +130,7 @@
                         :username "usernam4"}]
            (verify-customers-exists ds)))
 
+
     (is (= [{:email    "email4"
              :id       4
              :name     "name4"
@@ -134,15 +138,16 @@
            (select-fn ds {:email "email4"})))))
 
 (deftest select-user-session
-  (let [insert-fn (boa/build-query (->NextJdbcAdapter) "pg/insert-user-session")
-        select-fn (boa/build-query (->NextJdbcAdapter) "pg/select-user-session")]
+  (let [query-fn (boa/build-query (->NextJdbcAdapter) "mariadb/insert-user-session")
+        select-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-user-session")
+        select-all-fn (boa/build-query (->NextJdbcAdapter) "mariadb/select-all-user-sessions")]
 
-    (insert-fn ds {:username      "john_doe"
-                   :session-id    "sess123"
-                   :creation-date "2025-10-13 14:30:00"})
-    (insert-fn ds {:username      "jane_smith"
-                   :session-id    "sess456"
-                   :creation-date "2025-10-13 15:45:00"})
+    (query-fn ds {:username      "john_doe"
+                  :session-id    "sess123"
+                  :creation-date "2025-10-13 14:30:00"})
+    (query-fn ds {:username      "jane_smith"
+                  :session-id    "sess456"
+                  :creation-date "2025-10-13 15:45:00"})
 
     (is (= [{:creation-date "2025-10-13 14:30:00"
              :session-id    "sess123"
@@ -154,29 +159,13 @@
              :username      "jane_smith"}]
            (select-fn ds {:session "sess456"})))
 
+    (is (= [{:creation-date "2025-10-13 14:30:00"
+             :session-id    "sess123"
+             :username      "john_doe"}
+            {:creation-date "2025-10-13 15:45:00"
+             :session-id    "sess456"
+             :username      "jane_smith"}]
+           (select-all-fn ds)))
+
     (is (= []
            (select-fn ds {:session "not-existing"})))))
-
-(deftest verify-cast-in-pg
-  (let [query-fn (boa/build-query (->NextJdbcAdapter) "pg/insert-with-cast")]
-    (are [input expected] (= expected (query-fn ds input))
-                          {:id 1 :numeric-id "2"} [#:next.jdbc{:update-count 1}]
-                          {:id 2 :numeric-id "3"} [#:next.jdbc{:update-count 1}]
-                          {:id 3 :numeric-id "4"} [#:next.jdbc{:update-count 1}]
-                          {:id 4 :numeric-id "5"} [#:next.jdbc{:update-count 1}]
-                          (NumericId. 5 "6") [#:next.jdbc{:update-count 1}]))
-
-  (is (= [#:users_with_cast{:id         1
-                            :numeric_id 2}
-          #:users_with_cast{:id         2
-                            :numeric_id 3}
-          #:users_with_cast{:id         3
-                            :numeric_id 4}
-          #:users_with_cast{:id         4
-                            :numeric_id 5}
-          #:users_with_cast{:id         5
-                            :numeric_id 6}]
-         (jdbc/execute! ds ["SELECT * FROM users_with_cast; "])))
-
-  )
-

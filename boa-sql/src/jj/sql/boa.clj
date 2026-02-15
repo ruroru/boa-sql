@@ -3,8 +3,11 @@
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as boa-query])
-  (:import (java.util.function Function)))
+            [jj.sql.boa.query :as boa-query]
+            [jj.sql.boa.async-query :as async-boa-query]
+            )
+  (:import (java.util.concurrent CompletableFuture)
+           (java.util.function Consumer Function)))
 
 (def ^:private ^:const comma ",")
 (def ^:private ^:const question-mark "?")
@@ -95,3 +98,74 @@
              (logger/debug "Query is: " sql))
            (boa-query/query adapter ds sql params)))))))
 
+
+(defn build-async-query [executor adapter query-file]
+  (let [resource (or (io/resource query-file)
+                     (throw (ex-info "Query not found" {:file query-file})))
+        tokens (parser/tokenize (str/trim (slurp resource)))
+        var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
+
+    (cond
+      (zero? var-count)
+      (let [{:keys [sql]} (build-prepared-statement {} tokens "" [])]
+        (fn
+          ([ds respond raise]
+           (when (logger/enabled? :debug)
+             (logger/debug "Query is: " sql))
+           (-> (CompletableFuture/supplyAsync
+                 (fn []
+                   (boa-query/parameterless-query adapter ds sql))
+                 executor)
+               ^CompletableFuture (.thenAccept ^Consumer respond)
+               ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise))))
+          ([ds _ respond raise]
+           (when (logger/enabled? :debug)
+             (logger/debug "Query is: " sql))
+           (-> (CompletableFuture/supplyAsync
+                 (fn []
+                   (boa-query/parameterless-query adapter ds sql))
+                 executor)
+               ^CompletableFuture (.thenAccept ^Consumer respond)
+               ^CompletableFuture  (.exceptionally ^Function (ErrorHandler. raise))))))
+
+      (= 1 var-count)
+      (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
+            {:keys [sql]} (build-prepared-statement {var-name ::single-placeholder} tokens "" [])
+
+            single-arg-fn (fn [ds arg respond raise]
+                            (when (logger/enabled? :debug)
+                              (logger/debug "Query is: " sql))
+                            (let [param-value (get arg var-name)]
+                              (-> (CompletableFuture/supplyAsync
+                                    (fn []
+                                      (boa-query/query adapter ds sql [param-value]))
+                                    executor)
+                                  ^CompletableFuture (.thenAccept ^Consumer respond)
+                                  ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise)))))
+
+            array-arg-fn (fn [ds arg-map respond raise]
+                           (let [{:keys [sql params]} (build-prepared-statement arg-map tokens "" [])]
+                             (when (logger/enabled? :debug)
+                               (logger/debug "Query is: " sql))
+                             (-> (CompletableFuture/supplyAsync
+                                   (fn []
+                                     (boa-query/query adapter ds sql params))
+                                   executor)
+                                 ^CompletableFuture (.thenAccept ^Consumer respond)
+                                 ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise)))))]
+        (fn [ds arg respond raise]
+          (if (vector? (get arg var-name))
+            (array-arg-fn ds arg respond raise)
+            (single-arg-fn ds arg respond raise))))
+
+      :else
+      (fn [ds context respond raise]
+        (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
+          (when (logger/enabled? :debug)
+            (logger/debug "Query is: " sql))
+          (-> (CompletableFuture/supplyAsync
+                (fn []
+                  (boa-query/query adapter ds sql params))
+                executor)
+              ^CompletableFuture (.thenAccept ^Consumer respond)
+              ^CompletableFuture (.exceptionally ^Function (ErrorHandler. raise))))))))
