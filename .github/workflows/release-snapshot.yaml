@@ -1,11 +1,53 @@
-name: Release Snapshot to clojars
+name: Release Snapshot Version
 
 on:
-  workflow_dispatch: { }
+  workflow_dispatch:
 
 jobs:
-  release:
+  deploy:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    uses: ruroru/workflows/.github/workflows/clojars-sub-release-snapshot.yaml@master
-    secrets: inherit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare java
+        uses: actions/setup-java@v5
+        with:
+          distribution: adopt
+          java-version: 21
+
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@13.5
+        with:
+          lein: latest
+
+      - name: Run lein sub install
+        run: lein sub install
+
+      - name: Run lein install
+        run: lein install
+
+      - name: Run sub lein test
+        run: lein sub test
+
+      - name: Run lein test
+        run: lein test
+
+
+
+      - name: Configure GPG key
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+        run: echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import >/dev/null 2>/dev/null
+
+      - name: Deploy to clojars
+        env:
+          CLOJARS_USER: ${{ secrets.CLOJARS_USER }}
+          BOA_PARENT_CLOJARS_PASS: ${{ secrets.BOA_PARENT_CLOJARS_PASS }}
+          BOA_QUERY_CLOJARS_PASS: ${{ secrets.BOA_QUERY_CLOJARS_PASS }}
+          BOA_SQL_CLOJARS_PASS: ${{ secrets.BOA_SQL_CLOJARS_PASS }}
+          NEXT_JDBC_ADAPTER_CLOJARS_PASS: ${{ secrets.NEXT_JDBC_ADAPTER_CLOJARS_PASS }}
+        run: lein sub deploy clojars
+

@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/boa-sql "1.0.4-SNAPSHOT"
+(defproject org.clojars.jj/async-boa-sql "1.0.4-SNAPSHOT"
   :description "A library for frictionless SQL"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
@@ -13,7 +13,6 @@
                                      [com.h2database/h2 "2.4.240"]
                                      [org.clojars.jj/ring-http-exchange "1.4.1"]
                                      [hato "1.0.0"]
-
                                      [org.postgresql/postgresql "42.7.10"]
                                      [com.github.seancorfield/next.jdbc "1.3.1093"]]
                     :resource-paths ["test/resources"]}}
@@ -25,8 +24,8 @@
 
 
   :dependencies [[org.clojure/clojure "1.12.4"]
-                 [org.clojars.jj/boa-query "1.0.4-SNAPSHOT"]
-                 [org.clojars.jj/next-jdbc-adapter "1.0.4-SNAPSHOT"]
+                 [org.clojars.jj/boa-async-query "1.0.4-SNAPSHOT"]
+                 [org.clojars.jj/next-jdbc-async-adapter "1.0.4-SNAPSHOT"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]

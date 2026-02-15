@@ -2,8 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
+            [jj.sql.boa.async-query :as async-boa-query]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as boa-query]
             )
   (:import (java.util.function Function)))
 
@@ -15,6 +15,7 @@
 (deftype ErrorHandler [raise]
   Function
   (apply [this throwable]
+    (logger/error (str throwable))
     (raise {:status  500
             :headers {}
             :body    "Internal server error|"})))
@@ -49,53 +50,48 @@
         (recur context remaining sb parameters)))
     {:sql sb :params parameters}))
 
-(defn build-query [adapter query-file]
+
+
+
+(defn build-async-query [adapter query-file]
   (let [resource (or (io/resource query-file)
                      (throw (ex-info "Query not found" {:file query-file})))
         tokens (parser/tokenize (str/trim (slurp resource)))
         var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
-
     (cond
       (zero? var-count)
-      (let [{:keys [sql params]} (build-prepared-statement {} tokens "" [])]
+      (let [{:keys [sql]} (build-prepared-statement {} tokens "" [])]
         (fn
-          ([ds]
+          ([ds respond raise]
            (when (logger/enabled? :debug)
              (logger/debug "Query is: " sql))
-           (boa-query/parameterless-query adapter ds sql))
-          ([ds _]
+           (async-boa-query/parameterless-query adapter ds sql respond raise))
+          ([ds _ respond raise]
            (when (logger/enabled? :debug)
              (logger/debug "Query is: " sql))
-           (boa-query/parameterless-query adapter ds sql))))
+           (async-boa-query/parameterless-query adapter ds sql respond raise))))
 
       (= 1 var-count)
       (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
             {:keys [sql]} (build-prepared-statement {var-name ::single-placeholder} tokens "" [])
-
-            single-arg-fn (fn [ds arg]
+            single-arg-fn (fn [ds arg respond raise]
                             (when (logger/enabled? :debug)
                               (logger/debug "Query is: " sql))
                             (let [param-value (get arg var-name)]
-                              (boa-query/query adapter ds sql [param-value])))
-
-            array-arg-fn (fn [ds arg-map]
+                              (async-boa-query/query adapter ds sql [param-value] respond raise)))
+            array-arg-fn (fn [ds arg-map respond raise]
                            (let [{:keys [sql params]} (build-prepared-statement arg-map tokens "" [])]
                              (when (logger/enabled? :debug)
                                (logger/debug "Query is: " sql))
-                             (boa-query/query adapter ds sql params)))]
-        (fn [ds arg]
+                             (async-boa-query/query adapter ds sql params respond raise)))]
+        (fn [ds arg respond raise]
           (if (vector? (get arg var-name))
-            (array-arg-fn ds arg)
-            (single-arg-fn ds arg))))
+            (array-arg-fn ds arg respond raise)
+            (single-arg-fn ds arg respond raise))))
 
       :else
-      (fn
-        ([ds context]
-         (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
-           (when (logger/enabled? :debug)
-             (logger/debug "Query is: " sql))
-           (boa-query/query adapter ds sql params)))))))
-
-
-
-
+      (fn [ds context respond raise]
+        (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
+          (when (logger/enabled? :debug)
+            (logger/debug "Query is: " sql))
+          (async-boa-query/query adapter ds sql params respond raise))))))

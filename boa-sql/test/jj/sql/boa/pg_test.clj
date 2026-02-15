@@ -10,7 +10,7 @@
   {:dbtype   "postgresql"
    :dbname   "test_db"
    :host     "localhost"
-   :port     5432
+   :port     54323
    :user     "postgres"
    :password "postgres"
    })
@@ -20,12 +20,12 @@
                 (logger/info "Creating database test_db")
 
 
-                (pg/with-pg-fn {:port 5432}
+                (pg/with-pg-fn {:port 54323}
 
                                (fn []
                                  (jdbc/execute! {:dbtype   "postgresql"
                                                  :host     "localhost"
-                                                 :port     5432
+                                                 :port     54323
                                                  :user     "postgres"
                                                  :password "postgres"
                                                  } ["CREATE DATABASE test_db"])

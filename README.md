@@ -1,4 +1,4 @@
-# Boa SQL
+    # Boa SQL
 A library for a better SQL
 
 ## Installation

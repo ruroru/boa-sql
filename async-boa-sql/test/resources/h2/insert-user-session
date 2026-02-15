@@ -1,0 +1,2 @@
+INSERT INTO usersessions (username, session_id, creation_date)
+VALUES (:username, :session-id, :creation-date);
