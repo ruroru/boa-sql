@@ -1,0 +1,7 @@
+SELECT
+    username,
+    session_id AS "session-id",
+    strftime('%Y-%m-%d %H:%M:%S', creation_date) AS "creation-date"
+FROM
+    usersessions
+WHERE session_id = :session;
