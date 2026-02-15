@@ -28,7 +28,7 @@
                  [org.clojars.jj/boa-query "1.0.4-SNAPSHOT"]
                  [org.clojars.jj/next-jdbc-adapter "1.0.8-SNAPSHOT"]
                  [io.vertx/vertx-core "4.5.24"]
-                 [io.vertx/vertx-pg-client "4.5.24"]
+                 [io.vertx/vertx-pg-client "5.0.7"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
