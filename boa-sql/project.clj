@@ -27,7 +27,7 @@
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojars.jj/boa-query "1.0.4-SNAPSHOT"]
                  [org.clojars.jj/next-jdbc-adapter "1.0.8-SNAPSHOT"]
-                 [io.vertx/vertx-core "4.5.24"]
+                 [io.vertx/vertx-core "5.0.7"]
                  [io.vertx/vertx-pg-client "4.5.24"]
                  [org.clojure/tools.logging "1.3.1"]]
 
