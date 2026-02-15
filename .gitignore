@@ -13,6 +13,7 @@ pom.xml.asc
 *.iml
 ./.idea/
 /.idea/
+**/.idea/
 /repo
 /file.db
 /file.mv.db

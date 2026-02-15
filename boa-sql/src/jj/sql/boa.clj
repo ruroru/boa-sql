@@ -3,7 +3,9 @@
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as boa-query])
+            [jj.sql.boa.query :as boa-query]
+            [jj.sql.boa.async-query :as async-boa-query]
+            )
   (:import (java.util.function Function)))
 
 (def ^:private ^:const comma ",")
@@ -95,3 +97,14 @@
              (logger/debug "Query is: " sql))
            (boa-query/query adapter ds sql params)))))))
 
+
+(defn build-async-query [adapter query-file]
+  (let [resource (or (io/resource query-file)
+                     (throw (ex-info "Query not found" {:file query-file})))
+        tokens (parser/tokenize (str/trim (slurp resource)))]
+    (fn
+      ([ds context respond reject]
+       (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
+         (when (logger/enabled? :debug)
+           (logger/debug "Query is: " sql))
+         (async-boa-query/query adapter ds sql params respond reject))))))
