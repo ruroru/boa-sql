@@ -5,7 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojars.jj/boa-async-query "1.0.4-SNAPSHOT"]
                  [io.vertx/vertx-pg-client "5.0.7"]
-                 [io.vertx/vertx-core "5.0.7"]
+                 [io.vertx/vertx-core "5.0.8"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :repositories [["local" {:url "file:///home/user/.m2/repository"
