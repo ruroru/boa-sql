@@ -7,7 +7,7 @@
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
                                     :password :env/boa_parent_clojars_pass}]]
-  :dependencies [[org.clojure/clojure "1.11.1"]]
+  :dependencies [[org.clojure/clojure "1.12.4"]]
 
   :sub [
         "boa-query"
