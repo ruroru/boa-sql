@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/next-jdbc-async-adapter "1.0.4-SNAPSHOT"
+(defproject org.clojars.jj/next-jdbc-async-adapter "1.0.4"
   :description "Boa SQL adapter for Next-JDBC"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
