@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/boa-sql-parent "1.0.4"
+(defproject org.clojars.jj/boa-sql-parent "1.0.5-SNAPSHOT"
   :description "A library for frictionless SQL"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
@@ -25,6 +25,7 @@
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
             [org.clojars.jj/strict-check "1.1.0"]
+            [org.clojars.jj/lein-sub-bump "1.0.0-SNAPSHOT"]
             [lein-sub "0.3.0"]
             [org.clojars.jj/lein-git-tag "1.0.0"]
             [org.clojars.jj/bump-md "1.1.0"]]
