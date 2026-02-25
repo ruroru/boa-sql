@@ -1,7 +1,7 @@
 (ns jj.sql.boa.async-pg-test
   (:require [clojure.test :refer [deftest is use-fixtures]]
             [clojure.tools.logging :as logger]
-            [jj.sql.boa :as boa]
+            [jj.sql.async-boa :as boa]
             [jj.sql.boa.query.next-jdbc-async :refer [->NextJdbcAdapter]]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]

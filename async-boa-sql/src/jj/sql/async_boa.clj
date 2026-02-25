@@ -1,4 +1,4 @@
-(ns jj.sql.boa
+(ns jj.sql.async-boa
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
