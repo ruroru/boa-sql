@@ -2,8 +2,12 @@
   (:require [jj.sql.boa.async-query :as boa-query]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs])
-  (:import [java.util.concurrent CompletableFuture]
-           [java.util.function Consumer Function]))
+  (:import (java.util.concurrent CompletableFuture)
+           (java.util.function Consumer Function)))
+
+(defn- as-consumer [f]
+  (reify Consumer
+    (accept [_ v] (f v))))
 
 (defrecord NextJdbcAdapter [executor additional-info]
   boa-query/AsyncBoaQuery
@@ -11,7 +15,7 @@
     (-> (CompletableFuture/supplyAsync
           (fn [] (jdbc/execute! ds [sql] additional-info))
           executor)
-        ^CompletableFuture (.thenAccept ^Consumer respond)
+        ^CompletableFuture (.thenAccept (as-consumer respond))
         ^CompletableFuture (.exceptionally ^Function
                                            (fn [throwable]
                                              (raise throwable)
@@ -21,7 +25,7 @@
     (-> (CompletableFuture/supplyAsync
           (fn [] (jdbc/execute! ds (into [sql] params) additional-info))
           executor)
-        ^CompletableFuture (.thenAccept ^Consumer respond)
+        ^CompletableFuture (.thenAccept (as-consumer respond))
         ^CompletableFuture (.exceptionally ^Function
                                            (fn [throwable]
                                              (raise throwable)
