@@ -6,7 +6,7 @@ A library for a better SQL
 Add to your dependency list:
 
 ```clojure
-[org.clojars.jj/boa-sql "1.0.7"]
+[org.clojars.jj/boa-sql "1.0.8"]
 ```
 
 ## Usage
