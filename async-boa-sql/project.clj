@@ -9,7 +9,7 @@
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.7"]
                                      [org.xerial/sqlite-jdbc "3.51.3.0"]
-                                     [org.clojars.bigsy/pg-embedded-clj "1.0.2"]
+                                     [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
                                      [com.h2database/h2 "2.4.240"]
                                      [org.clojars.jj/ring-http-exchange "1.4.1"]
                                      [hato "1.0.0"]
