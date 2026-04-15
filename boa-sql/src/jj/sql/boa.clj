@@ -44,6 +44,29 @@
             (array-arg-fn ds arg)
             (single-arg-fn ds arg))))
 
+      (= 2 var-count)
+      (let [vars (filterv (fn [[type _]] (= type :variable)) tokens)
+            var-name-1 (second (nth vars 0))
+            var-name-2 (second (nth vars 1))
+            {:keys [sql]} (parser/parse {var-name-1 ::single-placeholder
+                                         var-name-2 ::single-placeholder} tokens)
+
+            simple-fn (fn [ds arg]
+                        (when (logger/enabled? :debug)
+                          (logger/debug "Query is: " sql))
+                        (boa-query/query adapter ds sql [(get arg var-name-1) (get arg var-name-2)]))
+
+            complex-fn (fn [ds arg]
+                         (let [{:keys [sql params]} (parser/parse arg tokens)]
+                           (when (logger/enabled? :debug)
+                             (logger/debug "Query is: " sql))
+                           (boa-query/query adapter ds sql params)))]
+        (fn [ds arg]
+          (if (or (vector? (get arg var-name-1))
+                  (vector? (get arg var-name-2)))
+            (complex-fn ds arg)
+            (simple-fn ds arg))))
+
       :else
       (fn [ds context]
         (let [{:keys [sql params]} (parser/parse context tokens)]
