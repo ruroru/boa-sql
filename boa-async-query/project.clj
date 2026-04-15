@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/boa-async-query "1.0.9-SNAPSHOT"
+(defproject org.clojars.jj/boa-async-query "1.0.9"
   :description "BoaQuery protocol definition"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
