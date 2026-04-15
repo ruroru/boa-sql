@@ -98,6 +98,36 @@
             (complex-fn ds arg respond raise)
             (simple-fn ds arg respond raise))))
 
+      (= 3 var-count)
+      (let [vars (filterv (fn [[type _]] (= type :variable)) tokens)
+            var-name-1 (second (nth vars 0))
+            var-name-2 (second (nth vars 1))
+            var-name-3 (second (nth vars 2))
+            {:keys [sql]} (build-prepared-statement {var-name-1 ::single-placeholder
+                                                     var-name-2 ::single-placeholder
+                                                     var-name-3 ::single-placeholder} tokens "" [])
+
+            simple-fn (fn [ds arg respond raise]
+                        (when (logger/enabled? :debug)
+                          (logger/debug "Query is: " sql))
+                        (async-boa-query/query adapter ds sql 
+                                               [(get arg var-name-1) 
+                                                (get arg var-name-2) 
+                                                (get arg var-name-3)] 
+                                               respond raise))
+
+            complex-fn (fn [ds arg respond raise]
+                         (let [{:keys [sql params]} (build-prepared-statement arg tokens "" [])]
+                           (when (logger/enabled? :debug)
+                             (logger/debug "Query is: " sql))
+                           (async-boa-query/query adapter ds sql params respond raise)))]
+        (fn [ds arg respond raise]
+          (if (or (vector? (get arg var-name-1))
+                  (vector? (get arg var-name-2))
+                  (vector? (get arg var-name-3)))
+            (complex-fn ds arg respond raise)
+            (simple-fn ds arg respond raise))))
+
       :else
       (fn [ds context respond raise]
         (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
