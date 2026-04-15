@@ -1,54 +1,41 @@
-(ns jj.sql.boa.parser)
+(ns jj.sql.boa.parser
+  (:require [jj.sql.boa.lexer :as lexer]))
 
-(def ^:private terminators #{\space \, \) \( \newline \tab \; \return})
+(def ^:private ^:const comma ",")
+(def ^:private ^:const question-mark "?")
+(def ^:private ^:const op-paren "(")
+(def ^:private ^:const cl-paren ")")
 
-(defn- tokenize-recursively [chars current-string tokens in-quote]
-  (if (empty? chars)
-    (if (empty? current-string)
-      tokens
-      (conj tokens [:text current-string]))
-    (let [char (first chars)
-          remaining (rest chars)]
-      (cond
-        (and (or (= char \`) (= char \'))
-             (or (nil? in-quote) (= char in-quote)))
-        (recur remaining
-               (str current-string char)
-               tokens
-               (if in-quote nil char))
+(defn- parse-ast [context lexed-list sb parameters]
+  (if-let [[token-type token-value] (first lexed-list)]
+    (let [remaining (rest lexed-list)]
+      (case token-type
+        :text
+        (recur context remaining (str sb token-value) parameters)
 
-        in-quote
-        (recur remaining (str current-string char) tokens in-quote)
-
-        (and (not in-quote) (= char \-) (= (first remaining) \-))
-        (let [rest-after-comment (drop-while #(not= % \newline) remaining)
-              rest-after-newline (if (= (first rest-after-comment) \newline)
-                                   (rest rest-after-comment)
-                                   rest-after-comment)]
-          (recur rest-after-newline current-string tokens nil))
-
-        (and (= char \:) (= (first remaining) \:))
-        (recur (rest remaining) (str current-string "::") tokens nil)
-
-        (and (= char \:) (not= (first remaining) \:))
-        (let [tokens-with-text (if (empty? current-string)
-                                 tokens
-                                 (conj tokens [:text current-string]))
-              [var-name rest-chars] (loop [name-chars []
-                                           remaining-chars remaining]
-                                      (if (or (empty? remaining-chars)
-                                              (terminators (first remaining-chars))
-                                              (and (= (first remaining-chars) \:)
-                                                   (= (second remaining-chars) \:)))
-                                        [(apply str name-chars) remaining-chars]
-                                        (recur (conj name-chars (first remaining-chars))
-                                               (rest remaining-chars))))
-              var-token [:variable (keyword var-name)]
-              new-tokens (conj tokens-with-text var-token)]
-          (recur rest-chars "" new-tokens nil))
-
-        :else
-        (recur remaining (str current-string char) tokens in-quote)))))
+        :variable
+        (let [value (get context token-value)]
+          (if (coll? value)
+            (if (coll? (first value))
+              (let [number-of-items-per-tuple (count (first value))
+                    number-of-tuples (count value)
+                    placeholders (apply str
+                                       (interpose comma
+                                                  (repeat number-of-tuples
+                                                          (str op-paren
+                                                               (apply str (interpose comma (repeat number-of-items-per-tuple question-mark)))
+                                                               cl-paren))))]
+                (recur context remaining (str sb placeholders) (into parameters (flatten value))))
+              (let [placeholders (str op-paren
+                                     (apply str (interpose comma (repeat (count value) question-mark)))
+                                     cl-paren)]
+                (recur context remaining (str sb placeholders) (into parameters value))))
+            (recur context remaining (str sb question-mark) (conj parameters (get context token-value)))))
+        (recur context remaining sb parameters)))
+    {:sql sb :params parameters}))
 
 (defn tokenize [string]
-  (tokenize-recursively (seq string) "" [] nil))
+  (lexer/tokenize string))
+
+(defn parse [context tokens]
+  (parse-ast context tokens "" []))

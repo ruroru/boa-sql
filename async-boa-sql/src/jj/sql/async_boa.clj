@@ -39,9 +39,6 @@
         (recur context remaining sb parameters)))
     {:sql sb :params parameters}))
 
-
-
-
 (defn build-async-query [adapter query-file]
   (let [resource (or (io/resource query-file)
                      (throw (ex-info "Query not found" {:file query-file})))

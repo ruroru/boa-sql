@@ -3,41 +3,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as boa-query]
-            ))
-
-(def ^:private ^:const comma ",")
-(def ^:private ^:const question-mark "?")
-(def ^:private ^:const op-paren "(")
-(def ^:private ^:const cl-paren ")")
-
-(defn- build-prepared-statement [context parsed-tokens sb parameters]
-  (if-let [[token-type token-value] (first parsed-tokens)]
-    (let [remaining (rest parsed-tokens)]
-      (case token-type
-        :text
-        (recur context remaining (str sb token-value) parameters)
-
-        :variable
-        (let [value (get context token-value)]
-          (if (coll? value)
-            (if (coll? (first value))
-              (let [number-of-items-per-tuple (count (first value))
-                    number-of-tuples (count value)
-                    placeholders (apply str
-                                        (interpose comma
-                                                   (repeat number-of-tuples
-                                                           (str op-paren
-                                                                (apply str (interpose comma (repeat number-of-items-per-tuple question-mark)))
-                                                                cl-paren))))]
-                (recur context remaining (str sb placeholders) (into parameters (flatten value))))
-              (let [placeholders (str op-paren
-                                      (apply str (interpose comma (repeat (count value) question-mark)))
-                                      cl-paren)]
-                (recur context remaining (str sb placeholders) (into parameters value))))
-            (recur context remaining (str sb question-mark) (conj parameters (get context token-value)))))
-        (recur context remaining sb parameters)))
-    {:sql sb :params parameters}))
+            [jj.sql.boa.query :as boa-query]))
 
 (defn build-query [adapter query-file]
   (let [resource (or (io/resource query-file)
@@ -47,7 +13,7 @@
 
     (cond
       (zero? var-count)
-      (let [{:keys [sql params]} (build-prepared-statement {} tokens "" [])]
+      (let [{:keys [sql]} (parser/parse {} tokens)]
         (fn
           ([ds]
            (when (logger/enabled? :debug)
@@ -60,7 +26,7 @@
 
       (= 1 var-count)
       (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
-            {:keys [sql]} (build-prepared-statement {var-name ::single-placeholder} tokens "" [])
+            {:keys [sql]} (parser/parse {var-name ::single-placeholder} tokens)
 
             single-arg-fn (fn [ds arg]
                             (when (logger/enabled? :debug)
@@ -69,7 +35,7 @@
                               (boa-query/query adapter ds sql [param-value])))
 
             array-arg-fn (fn [ds arg-map]
-                           (let [{:keys [sql params]} (build-prepared-statement arg-map tokens "" [])]
+                           (let [{:keys [sql params]} (parser/parse arg-map tokens)]
                              (when (logger/enabled? :debug)
                                (logger/debug "Query is: " sql))
                              (boa-query/query adapter ds sql params)))]
@@ -79,13 +45,8 @@
             (single-arg-fn ds arg))))
 
       :else
-      (fn
-        ([ds context]
-         (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
-           (when (logger/enabled? :debug)
-             (logger/debug "Query is: " sql))
-           (boa-query/query adapter ds sql params)))))))
-
-
-
-
+      (fn [ds context]
+        (let [{:keys [sql params]} (parser/parse context tokens)]
+          (when (logger/enabled? :debug)
+            (logger/debug "Query is: " sql))
+          (boa-query/query adapter ds sql params))))))
