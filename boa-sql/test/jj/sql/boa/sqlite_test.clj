@@ -84,40 +84,6 @@
            (select-fn ds {:email "email4"})))))
 
 (defrecord Customer [user-name email name])
-(deftest insert-multiple-tuples
-  (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/multi-insert")
-        select-fn (boa/build-query (->NextJdbcAdapter) "sqlite/select-customer")]
-    (are [input expected] (= expected (query-fn ds input))
-                          {:customer ["username" "email" "name"]} [#:next.jdbc{:update-count 1}]
-                          {:customer ["username2" "email2" "name2"]} [#:next.jdbc{:update-count 1}]
-                          {:customer ["username3" "email3" "name3"]} [#:next.jdbc{:update-count 1}]
-                          {:customer ["usernam4" "email4" "name4"]} [#:next.jdbc{:update-count 1}])
-
-    (is (= [#:customers{:email    "email"
-                        :id       1
-                        :name     "name"
-                        :username "username"}
-            #:customers{:email    "email2"
-                        :id       2
-                        :name     "name2"
-                        :username "username2"}
-            #:customers{:email    "email3"
-                        :id       3
-                        :name     "name3"
-                        :username "username3"}
-            #:customers{:email    "email4"
-                        :id       4
-                        :name     "name4"
-                        :username "usernam4"}]
-           (verify-customers-exists ds)))
-
-    (is (= [{:email    "email4"
-             :id       4
-             :name     "name4"
-             :username "usernam4"}]
-           (select-fn ds {:email "email4"})))))
-
-
 
 (deftest insert-multiple-tuples
   (let [query-fn (boa/build-query (->NextJdbcAdapter) "sqlite/multi-insert")

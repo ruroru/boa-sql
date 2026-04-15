@@ -4,29 +4,19 @@
             [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
             [jj.sql.boa.query :as boa-query]
-            )
-  (:import (java.util.function Function)))
+            ))
 
 (def ^:private ^:const comma ",")
 (def ^:private ^:const question-mark "?")
 (def ^:private ^:const op-paren "(")
 (def ^:private ^:const cl-paren ")")
 
-(deftype ErrorHandler [raise]
-  Function
-  (apply [this throwable]
-    (raise {:status  500
-            :headers {}
-            :body    "Internal server error|"})))
-
 (defn- build-prepared-statement [context parsed-tokens sb parameters]
   (if-let [[token-type token-value] (first parsed-tokens)]
     (let [remaining (rest parsed-tokens)]
       (case token-type
         :text
-        (do
-          (str sb token-value)
-          (recur context remaining (str sb token-value) parameters))
+        (recur context remaining (str sb token-value) parameters)
 
         :variable
         (let [value (get context token-value)]
