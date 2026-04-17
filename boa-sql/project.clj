@@ -26,6 +26,8 @@
 
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojars.jj/boa-query "1.0.11-SNAPSHOT"]
+                 [org.clojars.jj/boa-resource-resolver "1.0.11-SNAPSHOT"]
+                 [org.clojars.jj/boa-resolver "1.0.11-SNAPSHOT"]
                  [org.clojars.jj/next-jdbc-adapter "1.0.11-SNAPSHOT"]
                  [org.clojure/tools.logging "1.3.1"]]
 

@@ -10,12 +10,15 @@
   :dependencies [[org.clojure/clojure "1.12.4"]]
 
   :sub [
+        "boa-resolver"
+        "resource-resolver"
         "boa-query"
         "boa-async-query"
         "next-jdbc-adapter"
         "next-jdbc-async-adapter"
         "boa-sql"
         "async-boa-sql"
+
         ]
 
   :repositories [

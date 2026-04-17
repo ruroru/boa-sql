@@ -1,10 +1,11 @@
 (ns jj.sql.async-boa
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.logging :as logger]
-            [jj.sql.boa.async-query :as async-boa-query]
-            [jj.sql.boa.parser :as parser]
-            ))
+  (:require
+    [clojure.tools.logging :as logger]
+    [jj.sql.boa.async-query :as async-boa-query]
+    [jj.sql.boa.parser :as parser]
+    [jj.sql.boa.protocol.resolver :as resolver]
+    [jj.sql.boa.resource-resolver :as resource-resolver]
+    ))
 
 (def ^:private ^:const comma ",")
 (def ^:private ^:const question-mark "?")
@@ -39,10 +40,15 @@
         (recur context remaining sb parameters)))
     {:sql sb :params parameters}))
 
-(defn build-async-query [adapter query-file]
-  (let [resource (or (io/resource query-file)
-                     (throw (ex-info "Query not found" {:file query-file})))
-        tokens (parser/tokenize (str/trim (slurp resource)))
+
+
+
+(defn build-async-query [adapter query-file-path]
+  (let [resource-resolver (resource-resolver/->ResourceResolver)
+        string-value (when
+                       (resolver/can-open? resource-resolver query-file-path)
+                       (resolver/open resource-resolver query-file-path))
+        tokens (parser/tokenize string-value)
         var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
     (cond
       (zero? var-count)
@@ -110,10 +116,10 @@
             simple-fn (fn [ds arg respond raise]
                         (when (logger/enabled? :debug)
                           (logger/debug "Query is: " sql))
-                        (async-boa-query/query adapter ds sql 
-                                               [(get arg var-name-1) 
-                                                (get arg var-name-2) 
-                                                (get arg var-name-3)] 
+                        (async-boa-query/query adapter ds sql
+                                               [(get arg var-name-1)
+                                                (get arg var-name-2)
+                                                (get arg var-name-3)]
                                                respond raise))
 
             complex-fn (fn [ds arg respond raise]

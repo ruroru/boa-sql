@@ -1,14 +1,54 @@
 (ns jj.sql.boa
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.logging :as logger]
+  (:require [clojure.tools.logging :as logger]
             [jj.sql.boa.parser :as parser]
-            [jj.sql.boa.query :as boa-query]))
+            [jj.sql.boa.protocol.resolver :as resolver]
+            [jj.sql.boa.query :as boa-query]
+            [jj.sql.boa.resource-resolver :as resource-resolver]
+            ))
+
+(def ^:private ^:const comma ",")
+(def ^:private ^:const question-mark "?")
+(def ^:private ^:const op-paren "(")
+(def ^:private ^:const cl-paren ")")
+
+
+(defn- build-prepared-statement [context parsed-tokens sb parameters]
+  (if-let [[token-type token-value] (first parsed-tokens)]
+    (let [remaining (rest parsed-tokens)]
+      (case token-type
+        :text
+        (do
+          (str sb token-value)
+          (recur context remaining (str sb token-value) parameters))
+
+        :variable
+        (let [value (get context token-value)]
+          (if (coll? value)
+            (if (coll? (first value))
+              (let [number-of-items-per-tuple (count (first value))
+                    number-of-tuples (count value)
+                    placeholders (apply str
+                                        (interpose comma
+                                                   (repeat number-of-tuples
+                                                           (str op-paren
+                                                                (apply str (interpose comma (repeat number-of-items-per-tuple question-mark)))
+                                                                cl-paren))))]
+                (recur context remaining (str sb placeholders) (into parameters (flatten value))))
+              (let [placeholders (str op-paren
+                                      (apply str (interpose comma (repeat (count value) question-mark)))
+                                      cl-paren)]
+                (recur context remaining (str sb placeholders) (into parameters value))))
+            (recur context remaining (str sb question-mark) (conj parameters (get context token-value)))))
+        (recur context remaining sb parameters)))
+    {:sql sb :params parameters}))
 
 (defn build-query [adapter query-file]
-  (let [resource (or (io/resource query-file)
-                     (throw (ex-info "Query not found" {:file query-file})))
-        tokens (parser/tokenize (str/trim (slurp resource)))
+  (let [
+        resource-resolver (resource-resolver/->ResourceResolver)
+        string-value (when
+                               (resolver/can-open? resource-resolver query-file)
+                               (resolver/open resource-resolver query-file))
+        tokens (parser/tokenize string-value)
         var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
 
     (cond
@@ -79,8 +119,8 @@
             simple-fn (fn [ds arg]
                         (when (logger/enabled? :debug)
                           (logger/debug "Query is: " sql))
-                        (boa-query/query adapter ds sql [(get arg var-name-1) 
-                                                         (get arg var-name-2) 
+                        (boa-query/query adapter ds sql [(get arg var-name-1)
+                                                         (get arg var-name-2)
                                                          (get arg var-name-3)]))
 
             complex-fn (fn [ds arg]
