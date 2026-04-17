@@ -26,7 +26,9 @@ or async
 ```clojure
 (require [jj.sql.boa :as boa])
 
-(def async-query (boa/build-async-query executor (boa/->NextJdbcAdapter) "query-in-resource.sql"))
+(def executor (Executors/newVirtualThreadPerTaskExecutor))
+
+(def async-query (boa/build-async-query (boa/->NextJdbcAdapter executor) "query-in-resource.sql"))
 
 ;; Execute with context
 (async-query data-source {:user-id 42} respnd raise)
