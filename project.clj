@@ -17,7 +17,7 @@
         "next-jdbc-adapter"
         "next-jdbc-async-adapter"
         "boa-sql"
-        "async-boa-sql"
+        "boa-sql-async"
 
         ]
 
