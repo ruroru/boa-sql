@@ -7,40 +7,32 @@
     [jj.sql.boa.resource-resolver :as resource-resolver]
     ))
 
-(def ^:private ^:const comma ",")
-(def ^:private ^:const question-mark "?")
-(def ^:private ^:const op-paren "(")
-(def ^:private ^:const cl-paren ")")
-
-(defn- build-prepared-statement [context parsed-tokens sb parameters]
-  (if-let [[token-type token-value] (first parsed-tokens)]
-    (let [remaining (rest parsed-tokens)]
-      (case token-type
-        :text
-        (recur context remaining (str sb token-value) parameters)
-
-        :variable
-        (let [value (get context token-value)]
-          (if (coll? value)
-            (if (coll? (first value))
-              (let [number-of-items-per-tuple (count (first value))
-                    number-of-tuples (count value)
-                    placeholders (apply str
-                                        (interpose comma
-                                                   (repeat number-of-tuples
-                                                           (str op-paren
-                                                                (apply str (interpose comma (repeat number-of-items-per-tuple question-mark)))
-                                                                cl-paren))))]
-                (recur context remaining (str sb placeholders) (into parameters (flatten value))))
-              (let [placeholders (str op-paren
-                                      (apply str (interpose comma (repeat (count value) question-mark)))
-                                      cl-paren)]
-                (recur context remaining (str sb placeholders) (into parameters value))))
-            (recur context remaining (str sb question-mark) (conj parameters (get context token-value)))))
-        (recur context remaining sb parameters)))
-    {:sql sb :params parameters}))
-
-
+(defn- build-variadic-fn
+  [adapter tokens]
+  (let [var-names (mapv second (filterv (fn [[t _]] (= t :variable)) tokens))
+        placeholder-ctx (zipmap var-names (repeat ::single-placeholder))
+        {:keys [sql]} (parser/parse placeholder-ctx tokens)
+        n (count var-names)]
+    (fn [ds arg respond raise]
+      (let [has-vec? (loop [i 0]
+                       (if (< i n)
+                         (if (vector? (get arg (nth var-names i)))
+                           true
+                           (recur (inc i)))
+                         false))]
+        (if has-vec?
+          (let [{:keys [sql params]} (parser/parse arg tokens)]
+            (when (logger/enabled? :debug)
+              (logger/debug "Query is: " sql))
+            (async-boa-query/query adapter ds sql params respond raise))
+          (let [params (loop [i 0
+                              acc (transient [])]
+                         (if (< i n)
+                           (recur (inc i) (conj! acc (get arg (nth var-names i))))
+                           (persistent! acc)))]
+            (when (logger/enabled? :debug)
+              (logger/debug "Query is: " sql))
+            (async-boa-query/query adapter ds sql params respond raise)))))))
 
 
 (defn build-async-query [adapter query-file-path]
@@ -52,7 +44,7 @@
         var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
     (cond
       (zero? var-count)
-      (let [{:keys [sql]} (build-prepared-statement {} tokens "" [])]
+      (let [{:keys [sql]} (parser/parse {} tokens)]
         (fn
           ([ds respond raise]
            (when (logger/enabled? :debug)
@@ -65,14 +57,14 @@
 
       (= 1 var-count)
       (let [var-name (second (first (filter (fn [[type _]] (= type :variable)) tokens)))
-            {:keys [sql]} (build-prepared-statement {var-name ::single-placeholder} tokens "" [])
+            {:keys [sql]} (parser/parse {var-name ::single-placeholder} tokens)
             single-arg-fn (fn [ds arg respond raise]
                             (when (logger/enabled? :debug)
                               (logger/debug "Query is: " sql))
                             (let [param-value (get arg var-name)]
                               (async-boa-query/query adapter ds sql [param-value] respond raise)))
             array-arg-fn (fn [ds arg-map respond raise]
-                           (let [{:keys [sql params]} (build-prepared-statement arg-map tokens "" [])]
+                           (let [{:keys [sql params]} (parser/parse arg-map tokens)]
                              (when (logger/enabled? :debug)
                                (logger/debug "Query is: " sql))
                              (async-boa-query/query adapter ds sql params respond raise)))]
@@ -85,8 +77,8 @@
       (let [vars (filterv (fn [[type _]] (= type :variable)) tokens)
             var-name-1 (second (nth vars 0))
             var-name-2 (second (nth vars 1))
-            {:keys [sql]} (build-prepared-statement {var-name-1 ::single-placeholder
-                                                     var-name-2 ::single-placeholder} tokens "" [])
+            {:keys [sql]} (parser/parse {var-name-1 ::single-placeholder
+                                         var-name-2 ::single-placeholder} tokens)
 
             simple-fn (fn [ds arg respond raise]
                         (when (logger/enabled? :debug)
@@ -94,7 +86,7 @@
                         (async-boa-query/query adapter ds sql [(get arg var-name-1) (get arg var-name-2)] respond raise))
 
             complex-fn (fn [ds arg respond raise]
-                         (let [{:keys [sql params]} (build-prepared-statement arg tokens "" [])]
+                         (let [{:keys [sql params]} (parser/parse arg tokens)]
                            (when (logger/enabled? :debug)
                              (logger/debug "Query is: " sql))
                            (async-boa-query/query adapter ds sql params respond raise)))]
@@ -109,9 +101,9 @@
             var-name-1 (second (nth vars 0))
             var-name-2 (second (nth vars 1))
             var-name-3 (second (nth vars 2))
-            {:keys [sql]} (build-prepared-statement {var-name-1 ::single-placeholder
-                                                     var-name-2 ::single-placeholder
-                                                     var-name-3 ::single-placeholder} tokens "" [])
+            {:keys [sql]} (parser/parse {var-name-1 ::single-placeholder
+                                         var-name-2 ::single-placeholder
+                                         var-name-3 ::single-placeholder} tokens)
 
             simple-fn (fn [ds arg respond raise]
                         (when (logger/enabled? :debug)
@@ -123,7 +115,7 @@
                                                respond raise))
 
             complex-fn (fn [ds arg respond raise]
-                         (let [{:keys [sql params]} (build-prepared-statement arg tokens "" [])]
+                         (let [{:keys [sql params]} (parser/parse arg tokens)]
                            (when (logger/enabled? :debug)
                              (logger/debug "Query is: " sql))
                            (async-boa-query/query adapter ds sql params respond raise)))]
@@ -134,9 +126,39 @@
             (complex-fn ds arg respond raise)
             (simple-fn ds arg respond raise))))
 
+      (= 4 var-count)
+      (let [vars (filterv (fn [[type _]] (= type :variable)) tokens)
+            var-name-1 (second (nth vars 0))
+            var-name-2 (second (nth vars 1))
+            var-name-3 (second (nth vars 2))
+            var-name-4 (second (nth vars 3))
+            {:keys [sql]} (parser/parse {var-name-1 ::single-placeholder
+                                         var-name-2 ::single-placeholder
+                                         var-name-3 ::single-placeholder
+                                         var-name-4 ::single-placeholder} tokens)
+
+            simple-fn (fn [ds arg respond raise]
+                        (when (logger/enabled? :debug)
+                          (logger/debug "Query is: " sql))
+                        (async-boa-query/query adapter ds sql
+                                               [(get arg var-name-1)
+                                                (get arg var-name-2)
+                                                (get arg var-name-3)
+                                                (get arg var-name-4)]
+                                               respond raise))
+
+            complex-fn (fn [ds arg respond raise]
+                         (let [{:keys [sql params]} (parser/parse arg tokens)]
+                           (when (logger/enabled? :debug)
+                             (logger/debug "Query is: " sql))
+                           (async-boa-query/query adapter ds sql params respond raise)))]
+        (fn [ds arg respond raise]
+          (if (or (vector? (get arg var-name-1))
+                  (vector? (get arg var-name-2))
+                  (vector? (get arg var-name-3))
+                  (vector? (get arg var-name-4)))
+            (complex-fn ds arg respond raise)
+            (simple-fn ds arg respond raise))))
+
       :else
-      (fn [ds context respond raise]
-        (let [{:keys [sql params]} (build-prepared-statement context tokens "" [])]
-          (when (logger/enabled? :debug)
-            (logger/debug "Query is: " sql))
-          (async-boa-query/query adapter ds sql params respond raise))))))
+      (build-variadic-fn adapter tokens))))
