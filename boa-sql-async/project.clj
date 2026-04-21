@@ -1,4 +1,4 @@
-(defproject org.clojars.jj/async-boa-sql "1.0.11-SNAPSHOT"
+(defproject org.clojars.jj/async-boa-sql "1.0.11"
   :description "A library for frictionless SQL"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
@@ -24,10 +24,10 @@
 
 
   :dependencies [[org.clojure/clojure "1.12.4"]
-                 [org.clojars.jj/boa-async-query "1.0.11-SNAPSHOT"]
-                 [org.clojars.jj/next-jdbc-async-adapter "1.0.11-SNAPSHOT"]
-                 [org.clojars.jj/boa-resource-resolver "1.0.11-SNAPSHOT"]
-                 [org.clojars.jj/boa-resolver "1.0.11-SNAPSHOT"]
+                 [org.clojars.jj/boa-async-query "1.0.11"]
+                 [org.clojars.jj/next-jdbc-async-adapter "1.0.11"]
+                 [org.clojars.jj/boa-resource-resolver "1.0.11"]
+                 [org.clojars.jj/boa-resolver "1.0.11"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
