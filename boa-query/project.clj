@@ -5,8 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.12.4"]]
 
-  :repositories [["local" {:url "file:///home/user/.m2/repository"
-                           :snapshots true}]
+  :repositories [
                  ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
                  ["clojars" {:url "https://repo.clojars.org/"}]]
 

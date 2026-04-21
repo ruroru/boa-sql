@@ -7,8 +7,7 @@
                  [com.github.seancorfield/next.jdbc "1.3.1093"]
                  [org.clojure/tools.logging "1.3.1"]]
 
-  :repositories [["local" {:url "file:///home/user/.m2/repository"
-                           :snapshots true}]
+  :repositories [
                  ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
                  ["clojars" {:url "https://repo.clojars.org/"}]]
 
