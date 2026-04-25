@@ -6,7 +6,8 @@ A library for a better SQL
 Add to your dependency list:
 
 ```clojure
-[org.clojars.jj/boa-sql "1.0.11"]
+[org.clojars.jj/boa-sql "1.0.11"] ;; for sync
+[org.clojars.jj/async-boa-sql "1.0.11"] ;; for async
 ```
 
 ## Usage
@@ -14,7 +15,8 @@ Add to your dependency list:
 Create a query file in your resources directory with variables marked with ``:variable``
 
 ```clojure
-(require [jj.sql.boa :as boa])
+(require  [jj.sql.boa :as boa]
+          [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]])
 
 (def query (boa/build-query (boa/->NextJdbcAdapter) "query-in-resource.sql"))
 
@@ -24,7 +26,8 @@ Create a query file in your resources directory with variables marked with ``:va
 
 or async
 ```clojure
-(require [jj.sql.boa :as boa])
+(require [jj.sql.async-boa :as boa]
+         [jj.sql.boa.query.next-jdbc-async :refer [->NextJdbcAdapter]])
 
 (def executor (Executors/newVirtualThreadPerTaskExecutor))
 
