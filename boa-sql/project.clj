@@ -14,7 +14,7 @@
                                      [org.clojars.jj/ring-http-exchange "1.4.4"]
                                      [hato "1.0.0"]
 
-                                     [org.postgresql/postgresql "42.7.10"]
+                                     [org.postgresql/postgresql "42.7.11"]
                                      [com.github.seancorfield/next.jdbc "1.3.1093"]]
                     :resource-paths ["test/resources"]}}
 
