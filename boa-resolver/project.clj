@@ -9,5 +9,5 @@
                                               :password :env/boa_sql_clojars_pass}]]
 
 
-            :dependencies [[org.clojure/clojure "1.12.4"]]
+            :dependencies [[org.clojure/clojure "1.12.5"]]
             :repl-options {:init-ns boa-resolver.core})

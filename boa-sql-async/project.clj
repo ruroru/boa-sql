@@ -23,7 +23,7 @@
                                     :password :env/boa_sql_clojars_pass}]]
 
 
-  :dependencies [[org.clojure/clojure "1.12.4"]
+  :dependencies [[org.clojure/clojure "1.12.5"]
                  [org.clojars.jj/boa-async-query "1.0.12-SNAPSHOT"]
                  [org.clojars.jj/next-jdbc-async-adapter "1.0.12-SNAPSHOT"]
                  [org.clojars.jj/boa-resource-resolver "1.0.12-SNAPSHOT"]
