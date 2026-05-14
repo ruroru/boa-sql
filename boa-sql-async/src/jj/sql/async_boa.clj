@@ -35,14 +35,32 @@
             (async-boa-query/query adapter ds sql params respond raise)))))))
 
 
+(defn- run-async-query [adapter ds sql params respond raise]
+  (when (logger/enabled? :debug)
+    (logger/debug "Query is: " sql))
+  (if (empty? params)
+    (async-boa-query/parameterless-query adapter ds sql respond raise)
+    (async-boa-query/query adapter ds sql params respond raise)))
+
 (defn build-async-query [adapter query-file-path]
   (let [resource-resolver (resource-resolver/->ResourceResolver)
         string-value (when
                        (resolver/can-open? resource-resolver query-file-path)
                        (resolver/open resource-resolver query-file-path))
         tokens (parser/tokenize string-value)
-        var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
-    (cond
+        var-count (count (filter (fn [[type _]] (= type :variable)) tokens))
+        conditional? (some #(= (first %) :if) tokens)]
+
+    (if conditional?
+      (fn
+        ([ds respond raise]
+         (let [{:keys [sql params]} (parser/parse {} tokens)]
+           (run-async-query adapter ds sql params respond raise)))
+        ([ds arg respond raise]
+         (let [{:keys [sql params]} (parser/parse (or arg {}) tokens)]
+           (run-async-query adapter ds sql params respond raise))))
+
+      (cond
       (zero? var-count)
       (let [{:keys [sql]} (parser/parse {} tokens)]
         (fn
@@ -161,4 +179,4 @@
             (simple-fn ds arg respond raise))))
 
       :else
-      (build-variadic-fn adapter tokens))))
+      (build-variadic-fn adapter tokens)))))

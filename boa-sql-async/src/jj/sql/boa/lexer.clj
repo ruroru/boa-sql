@@ -19,6 +19,34 @@
       (recur (conj name-chars (first remaining))
              (rest remaining)))))
 
+(defn- read-word [chars]
+  (loop [acc [] rem chars]
+    (if (or (empty? rem) (#{\space \newline \return \tab} (first rem)))
+      [(apply str acc) rem]
+      (recur (conj acc (first rem)) (rest rem)))))
+
+(defn- read-directive [chars]
+  ;; chars = (rest my-sequence), starting at the 2nd dash
+  ;; Returns [token remaining-after-line] or nil for a regular comment
+  (when (= (second chars) \-)
+    (let [after-triple-dash (drop 2 chars)]
+      (when (= (first after-triple-dash) \space)
+        (let [[word after-word] (read-word (rest after-triple-dash))]
+          (cond
+            (= word "IF")
+            (let [colon-seq (drop-while #(not= % \:) after-word)]
+              (when (= (first colon-seq) \:)
+                (let [[var-name remaining] (collect-variable-name (rest colon-seq))]
+                  [[:if (keyword var-name)] (skip-comment remaining)])))
+
+            (= word "ELSE")
+            [[:else] (skip-comment after-word)]
+
+            (= word "ENDIF")
+            [[:endif] (skip-comment after-word)]
+
+            :else nil))))))
+
 (defn- tokenize-recursively [my-sequence current-string vector in-quote]
   (if (empty? my-sequence)
     (if (empty? current-string)
@@ -38,8 +66,12 @@
         (recur (rest my-sequence) (str current-string current-char) vector in-quote)
 
         (and (= current-char \-) (= next-char \-))
-        (let [remaining (skip-comment (rest my-sequence))]
-          (recur remaining current-string vector nil))
+        (if-let [[directive remaining] (read-directive (rest my-sequence))]
+          (let [vector-with-text (if (empty? current-string)
+                                   vector
+                                   (conj vector [:text current-string]))]
+            (recur remaining "" (conj vector-with-text directive) nil))
+          (recur (skip-comment (rest my-sequence)) current-string vector nil))
 
         (and (= current-char \:) (= next-char \:))
         (recur (rest (rest my-sequence)) (str current-string "::") vector nil)

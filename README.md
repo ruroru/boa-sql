@@ -18,7 +18,7 @@ Create a query file in your resources directory with variables marked with ``:va
 (require  [jj.sql.boa :as boa]
           [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]])
 
-(def query (boa/build-query (boa/->NextJdbcAdapter) "query-in-resource.sql"))
+(def query (boa/build-query (->NextJdbcAdapter) "query-in-resource.sql"))
 
 ;; Execute with context
 (query data-source {:user-id 42})
@@ -31,10 +31,10 @@ or async
 
 (def executor (Executors/newVirtualThreadPerTaskExecutor))
 
-(def async-query (boa/build-async-query (boa/->NextJdbcAdapter executor) "query-in-resource.sql"))
+(def async-query (boa/build-async-query (->NextJdbcAdapter executor) "query-in-resource.sql"))
 
 ;; Execute with context
-(async-query data-source {:user-id 42} respnd raise)
+(async-query data-source {:user-id 42} respond raise)
 ```
 
 ### Single value
@@ -44,7 +44,6 @@ or async
 (query data-source {:user-id 123})
 ;; Produces: SELECT * FROM users WHERE user_id = ?;
 ;; Parameters: [123]
-
 ```
 
 ### Tuple
@@ -65,9 +64,48 @@ or async
 ;; Parameters: ["Alice" 30 "Bob" 25]
 ```
 
+### Conditional blocks
+
+Use `--- IF :variable` / `--- ENDIF` to include a SQL fragment only when a parameter is present (non-nil).
+
+```sql
+-- resources/users/search.sql
+SELECT id, name, email
+FROM users
+--- IF :offset
+ORDER BY id
+LIMIT 20 OFFSET :offset
+--- ENDIF
+```
+
+```clojure
+(query data-source {})            ;; SELECT id, name, email FROM users
+(query data-source {:offset 40})  ;; SELECT id, name, email FROM users ORDER BY id LIMIT 20 OFFSET ?
+```
+
+Add `--- ELSE` to provide a fallback fragment when the parameter is absent:
+
+```sql
+-- resources/users/search.sql
+SELECT id, name, email
+FROM users
+--- IF :limit
+ORDER BY id LIMIT :limit
+--- ELSE
+ORDER BY id
+--- ENDIF
+```
+
+```clojure
+(query data-source {})           ;; ... ORDER BY id
+(query data-source {:limit 10})  ;; ... ORDER BY id LIMIT ?
+```
+
+The condition variable (`:offset`, `:limit`) doubles as a SQL parameter placeholder inside the block when referenced with `:variable` syntax. Using it only in the `--- IF` line (with a hardcoded value in the body) is also valid.
+
 ## Tested on
 
-| databse    |
+| database   |
 |------------|
 | mariadb    |
 | mysql      |

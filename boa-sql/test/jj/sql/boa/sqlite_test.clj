@@ -187,4 +187,31 @@
             {:id "id7"}]
            (select-all-query-fn ds)))))
 
+(deftest conditional-block
+  (let [insert      (boa/build-query (->NextJdbcAdapter) "sqlite/insert")
+        paginated   (boa/build-query (->NextJdbcAdapter) "sqlite/select-users-paginated")]
+    (doseq [id ["id1" "id2" "id3" "id4" "id5"]]
+      (insert ds {:id id}))
+
+    (is (= 5 (count (paginated ds {})))
+        "without :limit returns all rows")
+
+    (is (= [{:id "id1"} {:id "id2"} {:id "id3"}]
+           (paginated ds {:limit 3}))
+        "with :limit returns ordered, bounded rows")))
+
+(deftest conditional-else-block
+  (let [insert     (boa/build-query (->NextJdbcAdapter) "sqlite/insert")
+        query-fn   (boa/build-query (->NextJdbcAdapter) "sqlite/select-users-with-else")]
+    (doseq [id ["id3" "id1" "id2"]]
+      (insert ds {:id id}))
+
+    (is (= [{:id "id1"} {:id "id2"} {:id "id3"}]
+           (query-fn ds {}))
+        "else branch: all rows ordered")
+
+    (is (= [{:id "id1"} {:id "id2"}]
+           (query-fn ds {:limit 2}))
+        "if branch: limited ordered rows")))
+
 

@@ -1,0 +1,5 @@
+SELECT id FROM users
+--- IF :limit
+ORDER BY id
+LIMIT :limit
+--- ENDIF

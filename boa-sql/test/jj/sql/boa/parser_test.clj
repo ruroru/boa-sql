@@ -135,3 +135,40 @@
           [:variable :numeric-id]
           [:text "::INTEGER)"]]
          (tokenize "INSERT INTO users_with_cast (id, numeric_id) VALUES (:id, :numeric-id::INTEGER)"))))
+
+(deftest if-directive-produces-if-token
+  (is (= [[:text "SELECT * FROM users\n"]
+          [:if :offset]
+          [:text "ORDER BY id"]]
+         (tokenize "SELECT * FROM users\n--- IF :offset\nORDER BY id"))))
+
+(deftest endif-directive-produces-endif-token
+  (is (= [[:if :offset]
+          [:text "ORDER BY id\n"]
+          [:endif]]
+         (tokenize "--- IF :offset\nORDER BY id\n--- ENDIF\n"))))
+
+(deftest if-endif-block-is-complete-token-sequence
+  (is (= [[:text "SELECT id FROM users\n"]
+          [:if :limit]
+          [:text "ORDER BY id\nLIMIT "]
+          [:variable :limit]
+          [:text "\n"]
+          [:endif]]
+         (tokenize "SELECT id FROM users\n--- IF :limit\nORDER BY id\nLIMIT :limit\n--- ENDIF\n"))))
+
+(deftest else-directive-produces-else-token
+  (is (= [[:if :flag]
+          [:text "A\n"]
+          [:else]
+          [:text "B\n"]
+          [:endif]]
+         (tokenize "--- IF :flag\nA\n--- ELSE\nB\n--- ENDIF\n"))))
+
+(deftest regular-comment-not-confused-with-directive
+  (is (= [[:text "SELECT * FROM users"]]
+         (tokenize "-- just a comment\nSELECT * FROM users"))))
+
+(deftest triple-dash-non-directive-treated-as-comment
+  (is (= [[:text "SELECT * FROM users"]]
+         (tokenize "--- not a directive\nSELECT * FROM users"))))

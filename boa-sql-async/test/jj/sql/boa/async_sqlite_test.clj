@@ -152,3 +152,39 @@
       (is (nil? error))
       (is (= [{:id "id2"} {:id "id3"} {:id "id4"} {:id "id5"} {:id "id6"} {:id "id7"}]
              result)))))
+
+(deftest conditional-block
+  (let [adapter    (->NextJdbcAdapter executor)
+        insert     (boa/build-async-query adapter "sqlite/insert")
+        paginated  (boa/build-async-query adapter "sqlite/select-users-paginated")]
+    (doseq [id ["id1" "id2" "id3" "id4" "id5"]]
+      (let [{:keys [error]} (invoke-async insert ds {:id id})]
+        (is (nil? error))))
+
+    (let [{:keys [result error]} (invoke-async paginated ds {})]
+      (is (nil? error))
+      (is (= 5 (count result))
+          "without :limit returns all rows"))
+
+    (let [{:keys [result error]} (invoke-async paginated ds {:limit 3})]
+      (is (nil? error))
+      (is (= [{:id "id1"} {:id "id2"} {:id "id3"}] result)
+          "with :limit returns ordered, bounded rows"))))
+
+(deftest conditional-else-block
+  (let [adapter   (->NextJdbcAdapter executor)
+        insert    (boa/build-async-query adapter "sqlite/insert")
+        query-fn  (boa/build-async-query adapter "sqlite/select-users-with-else")]
+    (doseq [id ["id3" "id1" "id2"]]
+      (let [{:keys [error]} (invoke-async insert ds {:id id})]
+        (is (nil? error))))
+
+    (let [{:keys [result error]} (invoke-async query-fn ds {})]
+      (is (nil? error))
+      (is (= [{:id "id1"} {:id "id2"} {:id "id3"}] result)
+          "else branch: all rows ordered"))
+
+    (let [{:keys [result error]} (invoke-async query-fn ds {:limit 2})]
+      (is (nil? error))
+      (is (= [{:id "id1"} {:id "id2"}] result)
+          "if branch: limited ordered rows"))))

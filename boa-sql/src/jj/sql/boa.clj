@@ -34,15 +34,32 @@
             (boa-query/query adapter ds sql params)))))))
 
 
+(defn- run-query [adapter ds sql params]
+  (when (logger/enabled? :debug)
+    (logger/debug "Query is: " sql))
+  (if (empty? params)
+    (boa-query/parameterless-query adapter ds sql)
+    (boa-query/query adapter ds sql params)))
+
 (defn build-query [adapter query-file]
   (let [resource-resolver (resource-resolver/->ResourceResolver)
         string-value (when
                        (resolver/can-open? resource-resolver query-file)
                        (resolver/open resource-resolver query-file))
         tokens (parser/tokenize string-value)
-        var-count (count (filter (fn [[type _]] (= type :variable)) tokens))]
+        var-count (count (filter (fn [[type _]] (= type :variable)) tokens))
+        conditional? (some #(= (first %) :if) tokens)]
 
-    (cond
+    (if conditional?
+      (fn
+        ([ds]
+         (let [{:keys [sql params]} (parser/parse {} tokens)]
+           (run-query adapter ds sql params)))
+        ([ds arg]
+         (let [{:keys [sql params]} (parser/parse (or arg {}) tokens)]
+           (run-query adapter ds sql params))))
+
+      (cond
       (zero? var-count)
       (let [{:keys [sql]} (parser/parse {} tokens)]
         (fn
@@ -159,4 +176,4 @@
             (simple-fn ds arg))))
 
       :else
-      (build-variadic-fn adapter tokens))))
+      (build-variadic-fn adapter tokens)))))
