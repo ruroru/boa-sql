@@ -15,7 +15,7 @@
                                      [hato "1.0.0"]
 
                                      [org.postgresql/postgresql "42.7.11"]
-                                     [com.github.seancorfield/next.jdbc "1.3.1093"]]
+                                     [com.github.seancorfield/next.jdbc "1.3.1108"]]
                     :resource-paths ["test/resources"]}}
 
 

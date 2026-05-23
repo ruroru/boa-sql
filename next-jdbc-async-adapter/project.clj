@@ -4,7 +4,7 @@
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojars.jj/boa-async-query "1.0.12-SNAPSHOT"]
-                 [com.github.seancorfield/next.jdbc "1.3.1093"]
+                 [com.github.seancorfield/next.jdbc "1.3.1108"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :repositories [
