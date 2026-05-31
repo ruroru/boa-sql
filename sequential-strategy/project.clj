@@ -1,9 +1,9 @@
-(defproject org.clojars.jj/sequential-strategy "1.0.12-SNAPSHOT"
+(defproject org.clojars.jj/sequential-strategy "1.0.12"
   :description "Boa SQL sequential ($1, $2) build strategy"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojars.jj/boa-core "1.0.12-SNAPSHOT"]
+  :dependencies [[org.clojars.jj/boa-core "1.0.12"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :repositories [

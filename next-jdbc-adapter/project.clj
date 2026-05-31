@@ -1,10 +1,10 @@
-(defproject org.clojars.jj/next-jdbc-adapter "1.0.12-SNAPSHOT"
+(defproject org.clojars.jj/next-jdbc-adapter "1.0.12"
   :description "Boa SQL adapter for Next-JDBC"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojars.jj/boa-core "1.0.12-SNAPSHOT"]
-                 [org.clojars.jj/jdbc-strategy "1.0.12-SNAPSHOT"]
+  :dependencies [[org.clojars.jj/boa-core "1.0.12"]
+                 [org.clojars.jj/jdbc-strategy "1.0.12"]
                  [com.github.seancorfield/next.jdbc "1.3.1108"]
                  [org.clojure/tools.logging "1.3.1"]]
 
