@@ -1,3 +1,0 @@
-SELECT id, username, email, name
-FROM customers
-WHERE email = :email;

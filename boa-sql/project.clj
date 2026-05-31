@@ -13,6 +13,8 @@
                                      [com.h2database/h2 "2.4.240"]
                                      [org.clojars.jj/ring-http-exchange "1.4.6"]
                                      [hato "1.0.0"]
+                                     [org.clojars.jj/next-jdbc-async-adapter "1.0.12-SNAPSHOT"]
+                                     [org.clojars.jj/sequential-strategy "1.0.12-SNAPSHOT"]
 
                                      [org.postgresql/postgresql "42.7.11"]
                                      [com.github.seancorfield/next.jdbc "1.3.1108"]]
@@ -21,15 +23,12 @@
 
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
-                                    :password :env/boa_sql_clojars_pass}]]
-
+                                    :password :env/clojars_pass}]]
 
   :dependencies [[org.clojure/clojure "1.12.5"]
-                 [org.clojars.jj/boa-query "1.0.12-SNAPSHOT"]
+                 [org.clojars.jj/boa-core "1.0.12-SNAPSHOT"]
                  [org.clojars.jj/boa-resource-resolver "1.0.12-SNAPSHOT"]
-                 [org.clojars.jj/boa-resolver "1.0.12-SNAPSHOT"]
-                 [org.clojars.jj/next-jdbc-adapter "1.0.12-SNAPSHOT"]
-                 [org.clojure/tools.logging "1.3.1"]]
+                 [org.clojars.jj/next-jdbc-adapter "1.0.12-SNAPSHOT"]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
             [org.clojars.jj/strict-check "1.1.0"]

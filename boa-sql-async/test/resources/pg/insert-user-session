@@ -1,2 +1,0 @@
-INSERT INTO usersessions (username, session_id, creation_date)
-VALUES (:username, :session-id, CAST(:creation-date AS TIMESTAMP));

@@ -1,36 +1,32 @@
 (ns jj.sql.boa.query.next-jdbc-async
-  (:require [jj.sql.boa.async-query :as boa-query]
+  (:require [jj.sql.boa.protocol.query-builder :as query-builder]
+            [jj.sql.boa.query :as boa-query]
+            [jj.sql.boa.strategy.jdbc :as jdbc-strategy]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs])
-  (:import (java.util.concurrent CompletableFuture)
-           (java.util.function Consumer Function)))
+  (:import (java.util.concurrent CompletableFuture ExecutorService)))
 
-(defn- as-consumer [f]
-       (reify Consumer
-              (accept [_ v] (f v))))
+(defrecord NextJdbcAsyncAdapter [^ExecutorService executor additional-info strategy]
+  boa-query/BoaQuery
+  (parameterless-query [_ ds sql]
+    (if executor
+      (CompletableFuture/supplyAsync
+        (fn [] (jdbc/execute! ds [sql] additional-info))
+        executor)
+      (CompletableFuture/supplyAsync
+        (fn [] (jdbc/execute! ds [sql] additional-info)))))
+  (query [_ ds sql params]
+    (if executor
+      (CompletableFuture/supplyAsync
+        (fn [] (jdbc/execute! ds (into [sql] params) additional-info))
+        executor)
+      (CompletableFuture/supplyAsync
+        (fn [] (jdbc/execute! ds (into [sql] params) additional-info)))))
+  query-builder/QueryBuilder
+  (build-query [_ tokens]
+    (query-builder/build-query strategy tokens)))
 
-(defrecord NextJdbcAdapter [executor additional-info]
-           boa-query/AsyncBoaQuery
-           (parameterless-query [this ds sql respond raise]
-                                (let [^CompletableFuture cf (CompletableFuture/supplyAsync
-                                                              (fn [] (jdbc/execute! ds [sql] additional-info))
-                                                              executor)]
-                                     (-> cf
-                                         (.thenAccept ^Consumer (as-consumer respond))
-                                         (.exceptionally ^Function (fn [throwable]
-                                                                       (raise throwable)
-                                                                       nil)))))
-
-           (query [this ds sql params respond raise]
-                  (let [^CompletableFuture cf (CompletableFuture/supplyAsync
-                                                (fn [] (jdbc/execute! ds (into [sql] params) additional-info))
-                                                executor)]
-                       (-> cf
-                           (.thenAccept ^Consumer (as-consumer respond))
-                           (.exceptionally ^Function (fn [throwable]
-                                                         (raise throwable)
-                                                         nil))))))
-
-(defn ->NextJdbcAdapter
-      ([executor] (->NextJdbcAdapter executor {:builder-fn rs/as-unqualified-lower-maps}))
-      ([executor additional-info] (NextJdbcAdapter. executor additional-info)))
+(defn ->NextJdbcAsyncAdapter
+  ([] (->NextJdbcAsyncAdapter nil {:builder-fn rs/as-unqualified-lower-maps}))
+  ([executor] (->NextJdbcAsyncAdapter executor {:builder-fn rs/as-unqualified-lower-maps}))
+  ([executor additional-info] (NextJdbcAsyncAdapter. executor additional-info (jdbc-strategy/->JDBCStrategy))))

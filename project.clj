@@ -6,19 +6,17 @@
 
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
-                                    :password :env/boa_parent_clojars_pass}]]
+                                    :password :env/clojars_pass}]]
   :dependencies [[org.clojure/clojure "1.12.5"]]
 
   :sub [
-        "boa-resolver"
+        "boa-core"
         "resource-resolver"
-        "boa-query"
-        "boa-async-query"
+        "jdbc-strategy"
+        "sequential-strategy"
         "next-jdbc-adapter"
         "next-jdbc-async-adapter"
         "boa-sql"
-        "boa-sql-async"
-
         ]
 
   :repositories [

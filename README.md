@@ -6,36 +6,70 @@ A library for a better SQL
 Add to your dependency list:
 
 ```clojure
-[org.clojars.jj/boa-sql "1.0.11"] ;; for sync
-[org.clojars.jj/async-boa-sql "1.0.11"] ;; for async
+[org.clojars.jj/boa-sql "1.0.12"]
 ```
 
 ## Usage
 
-Create a query file in your resources directory with variables marked with ``:variable``
+Create a query file in your resources directory with variables marked with `:variable`
+
+### Next.JDBC (synchronous)
 
 ```clojure
-(require  [jj.sql.boa :as boa]
-          [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]])
+(require [jj.sql.boa :as boa]
+         [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]])
 
 (def query (boa/build-query (->NextJdbcAdapter) "query-in-resource.sql"))
 
-;; Execute with context
 (query data-source {:user-id 42})
 ```
 
-or async
+### Next.JDBC (async)
+
+Returns `CompletableFuture` for each query.
+
 ```clojure
-(require [jj.sql.async-boa :as boa]
-         [jj.sql.boa.query.next-jdbc-async :refer [->NextJdbcAdapter]])
+(require [jj.sql.boa :as boa]
+         [jj.sql.boa.query.next-jdbc-async :refer [->NextJdbcAsyncAdapter]])
 
-(def executor (Executors/newVirtualThreadPerTaskExecutor))
+(def query (boa/build-query (->NextJdbcAsyncAdapter) "query-in-resource.sql"))
 
-(def async-query (boa/build-async-query (->NextJdbcAdapter executor) "query-in-resource.sql"))
-
-;; Execute with context
-(async-query data-source {:user-id 42} respond raise)
+(.get (query data-source {:user-id 42}))
 ```
+
+## Query Builders
+
+Each adapter carries a query builder that controls how SQL placeholders are generated.
+
+### JDBCStrategy (default)
+
+Uses `?` placeholders and map arguments. This is the default for all built-in adapters.
+
+```clojure
+;; Query file: SELECT * FROM users WHERE name = :name AND age = :age
+;; Produces:   SELECT * FROM users WHERE name = ? AND age = ?
+;; Arguments:  {:name "John" :age 20}
+```
+
+### SequentialStrategy
+
+Uses `$1`, `$2` placeholders and vector arguments. Useful for drivers that use positional parameters.
+
+```clojure
+(require [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
+         [jj.sql.boa.strategy.sequential :refer [->SequentialStrategy]]
+         [next.jdbc.result-set :as rs])
+(import [jj.sql.boa.query.next_jdbc NextJdbcAdapter])
+
+;; Pass a custom strategy when creating an adapter
+(def adapter (NextJdbcAdapter. {:builder-fn rs/as-unqualified-lower-maps} (->SequentialStrategy)))
+
+;; Query file: SELECT * FROM users WHERE name = :name AND age = :age
+;; Produces:   SELECT * FROM users WHERE name = $1 AND age = $2
+;; Arguments:  ["John" 20]
+```
+
+## Query Examples
 
 ### Single value
 
@@ -107,12 +141,10 @@ The condition variable (`:offset`, `:limit`) doubles as a SQL parameter placehol
 
 | database   |
 |------------|
-| mariadb    |
-| mysql      |
-| postgresql |
-| h2         |
-| derby      |
-| sqlite     |
+| H2         |
+| SQLite     |
+| MariaDB    |
+| PostgreSQL |
 
 ## License
 

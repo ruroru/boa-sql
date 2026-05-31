@@ -45,9 +45,6 @@ jobs:
       - name: Deploy to clojars
         env:
           CLOJARS_USER: ${{ secrets.CLOJARS_USER }}
-          BOA_PARENT_CLOJARS_PASS: ${{ secrets.BOA_PARENT_CLOJARS_PASS }}
-          BOA_QUERY_CLOJARS_PASS: ${{ secrets.BOA_QUERY_CLOJARS_PASS }}
-          BOA_SQL_CLOJARS_PASS: ${{ secrets.BOA_SQL_CLOJARS_PASS }}
-          NEXT_JDBC_ADAPTER_CLOJARS_PASS: ${{ secrets.NEXT_JDBC_ADAPTER_CLOJARS_PASS }}
+          CLOJARS_PASS: ${{ secrets.CLOJARS_PASS }}
         run: lein sub deploy clojars
 
