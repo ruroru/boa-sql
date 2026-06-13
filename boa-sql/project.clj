@@ -7,7 +7,7 @@
   :profiles {:test {
                     :dependencies   [[ch.qos.logback/logback-classic "1.5.34"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
-                                     [org.mariadb.jdbc/mariadb-java-client "3.5.8"]
+                                     [org.mariadb.jdbc/mariadb-java-client "3.5.9"]
                                      [org.xerial/sqlite-jdbc "3.53.2.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
                                      [com.h2database/h2 "2.4.240"]
