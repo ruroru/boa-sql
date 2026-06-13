@@ -11,7 +11,7 @@
                                      [org.xerial/sqlite-jdbc "3.53.2.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
                                      [com.h2database/h2 "2.4.240"]
-                                     [org.clojars.jj/ring-http-exchange "1.4.6"]
+                                     [org.clojars.jj/ring-http-exchange "1.4.7"]
                                      [hato "1.0.0"]
                                      [org.clojars.jj/next-jdbc-async-adapter "1.0.13-SNAPSHOT"]
                                      [org.clojars.jj/sequential-strategy "1.0.13-SNAPSHOT"]
