@@ -5,7 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojars.jj/boa-core "1.0.13-SNAPSHOT"]
                  [org.clojars.jj/jdbc-strategy "1.0.13-SNAPSHOT"]
-                 [com.github.seancorfield/next.jdbc "1.3.1108"]
+                 [com.github.seancorfield/next.jdbc "1.3.1118"]
                  [org.clojure/tools.logging "1.3.1"]]
 
   :repositories [
