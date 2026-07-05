@@ -16,7 +16,7 @@
                                      [org.clojars.jj/next-jdbc-async-adapter "1.0.13-SNAPSHOT"]
                                      [org.clojars.jj/sequential-strategy "1.0.13-SNAPSHOT"]
 
-                                     [org.postgresql/postgresql "42.7.11"]
+                                     [org.postgresql/postgresql "42.7.12"]
                                      [com.github.seancorfield/next.jdbc "1.3.1118"]]
                     :resource-paths ["test/resources"]}}
 
