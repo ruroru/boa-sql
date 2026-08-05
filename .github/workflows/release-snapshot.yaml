@@ -23,19 +23,11 @@ jobs:
         with:
           lein: latest
 
-      - name: Run lein sub install
-        run: lein sub install
-
       - name: Run lein install
         run: lein install
 
-      - name: Run sub lein test
-        run: lein sub test
-
       - name: Run lein test
         run: lein test
-
-
 
       - name: Configure GPG key
         env:
@@ -46,5 +38,5 @@ jobs:
         env:
           CLOJARS_USER: ${{ secrets.CLOJARS_USER }}
           CLOJARS_PASS: ${{ secrets.CLOJARS_PASS }}
-        run: lein sub deploy clojars
+        run: lein deploy clojars
 

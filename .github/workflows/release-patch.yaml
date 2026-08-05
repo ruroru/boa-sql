@@ -33,20 +33,11 @@ jobs:
       - name: Step patch version for release
         run: lein bump patch
 
-      - name: Step bump sub project dependency versions
-        run: lein sub-bump
-
       - name: Step version in README.md
         run: lein bump-md
 
-      - name: Run lein sub install
-        run: lein sub install
-
       - name: Run lein install
         run: lein install
-
-      - name: Run sub lein test
-        run: lein sub test
 
       - name: Run lein test
         run: lein test
@@ -66,13 +57,10 @@ jobs:
         env:
           CLOJARS_USER: ${{ secrets.CLOJARS_USER }}
           CLOJARS_PASS: ${{ secrets.CLOJARS_PASS }}
-        run: lein sub deploy clojars
+        run: lein deploy clojars
 
       - name: Bump project version to snapshot
         run: lein bump dev
-
-      - name: Step bump sub project dependency versions
-        run: lein sub-bump
 
       - name: Push snapshot bump
         uses: stefanzweifel/git-auto-commit-action@v7

@@ -37,36 +37,15 @@ Returns `CompletableFuture` for each query.
 (.get (query data-source {:user-id 42}))
 ```
 
-## Query Builders
+## Placeholders
 
-Each adapter carries a query builder that controls how SQL placeholders are generated.
-
-### JDBCStrategy (default)
-
-Uses `?` placeholders and map arguments. This is the default for all built-in adapters.
+Variables marked with `:variable` are compiled to `?` JDBC placeholders, and their
+values are passed as positional parameters.
 
 ```clojure
 ;; Query file: SELECT * FROM users WHERE name = :name AND age = :age
 ;; Produces:   SELECT * FROM users WHERE name = ? AND age = ?
 ;; Arguments:  {:name "John" :age 20}
-```
-
-### SequentialStrategy
-
-Uses `$1`, `$2` placeholders and vector arguments. Useful for drivers that use positional parameters.
-
-```clojure
-(require [jj.sql.boa.query.next-jdbc :refer [->NextJdbcAdapter]]
-         [jj.sql.boa.strategy.sequential :refer [->SequentialStrategy]]
-         [next.jdbc.result-set :as rs])
-(import [jj.sql.boa.query.next_jdbc NextJdbcAdapter])
-
-;; Pass a custom strategy when creating an adapter
-(def adapter (NextJdbcAdapter. {:builder-fn rs/as-unqualified-lower-maps} (->SequentialStrategy)))
-
-;; Query file: SELECT * FROM users WHERE name = :name AND age = :age
-;; Produces:   SELECT * FROM users WHERE name = $1 AND age = $2
-;; Arguments:  ["John" 20]
 ```
 
 ## Query Examples

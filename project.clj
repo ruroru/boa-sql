@@ -1,32 +1,32 @@
-(defproject org.clojars.jj/boa-sql-parent "1.0.13-SNAPSHOT"
+(defproject org.clojars.jj/boa-sql "1.0.13-SNAPSHOT"
   :description "A library for frictionless SQL"
   :url "https://github.com/ruroru/boa-sql"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
 
+  :dependencies [[org.clojure/clojure "1.12.5"]
+                 [org.clojure/tools.logging "1.3.1"]
+                 [com.github.seancorfield/next.jdbc "1.3.1118"]]
+
+  :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.1"]
+                                     [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
+                                     [org.mariadb.jdbc/mariadb-java-client "3.5.10"]
+                                     [org.xerial/sqlite-jdbc "3.53.2.1"]
+                                     [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
+                                     [com.h2database/h2 "2.4.240"]
+                                     [org.clojars.jj/ring-http-exchange "1.4.9"]
+                                     [hato "1.0.0"]
+                                     [org.postgresql/postgresql "42.7.13"]]
+                    :resource-paths ["test/resources"]}}
+
+  :repositories [["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
+                 ["clojars" {:url "https://repo.clojars.org/"}]]
+
   :deploy-repositories [["clojars" {:url      "https://repo.clojars.org"
                                     :username :env/clojars_user
                                     :password :env/clojars_pass}]]
-  :dependencies [[org.clojure/clojure "1.12.5"]]
-
-  :sub [
-        "boa-core"
-        "resource-resolver"
-        "jdbc-strategy"
-        "sequential-strategy"
-        "next-jdbc-adapter"
-        "next-jdbc-async-adapter"
-        "boa-sql"
-        ]
-
-  :repositories [
-                 ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
-                 ["clojars" {:url "https://repo.clojars.org/"}]]
 
   :plugins [[org.clojars.jj/bump "1.0.4"]
             [org.clojars.jj/strict-check "1.1.0"]
-            [org.clojars.jj/lein-sub-bump "1.0.0"]
-            [lein-sub "0.3.0"]
             [org.clojars.jj/lein-git-tag "1.0.1"]
-            [org.clojars.jj/bump-md "1.1.0"]]
-  )
+            [org.clojars.jj/bump-md "1.1.0"]])
