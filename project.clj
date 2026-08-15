@@ -8,7 +8,7 @@
                  [org.clojure/tools.logging "1.3.1"]
                  [com.github.seancorfield/next.jdbc "1.3.1118"]]
 
-  :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.1"]
+  :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.3"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.10"]
                                      [org.xerial/sqlite-jdbc "3.53.2.1"]
