@@ -11,7 +11,7 @@
   :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.3"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.10"]
-                                     [org.xerial/sqlite-jdbc "3.53.2.1"]
+                                     [org.xerial/sqlite-jdbc "3.53.4.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
                                      [com.h2database/h2 "2.4.240"]
                                      [org.clojars.jj/ring-http-exchange "1.4.9"]
