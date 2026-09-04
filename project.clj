@@ -13,7 +13,7 @@
                                      [org.mariadb.jdbc/mariadb-java-client "3.5.10"]
                                      [org.xerial/sqlite-jdbc "3.53.4.0"]
                                      [org.clojars.bigsy/pg-embedded-clj "1.0.3"]
-                                     [com.h2database/h2 "2.4.240"]
+                                     [com.h2database/h2 "2.5.250"]
                                      [org.clojars.jj/ring-http-exchange "1.4.9"]
                                      [hato "1.0.0"]
                                      [org.postgresql/postgresql "42.7.13"]]
