@@ -16,7 +16,7 @@
                                      [com.h2database/h2 "2.5.252"]
                                      [org.clojars.jj/ring-http-exchange "1.4.9"]
                                      [hato "1.0.0"]
-                                     [org.postgresql/postgresql "42.7.13"]]
+                                     [org.postgresql/postgresql "42.7.14"]]
                     :resource-paths ["test/resources"]}}
 
   :repositories [["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
