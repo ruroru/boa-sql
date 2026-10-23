@@ -6,7 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.12.6"]
                  [org.clojure/tools.logging "1.3.1"]
-                 [com.github.seancorfield/next.jdbc "1.4.70"]]
+                 [com.github.seancorfield/next.jdbc "1.4.72"]]
 
   :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.5"]
                                      [org.clojars.jj/embedded-mariadb-clj "1.2.1"]
