@@ -5,7 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
 
   :dependencies [[org.clojure/clojure "1.12.6"]
-                 [org.clojure/tools.logging "1.3.1"]
+                 [org.clojure/tools.logging "1.3.2"]
                  [com.github.seancorfield/next.jdbc "1.4.72"]]
 
   :profiles {:test {:dependencies   [[ch.qos.logback/logback-classic "1.6.7"]
